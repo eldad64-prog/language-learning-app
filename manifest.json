@@ -1,0 +1,12 @@
+{
+  "name": "מסע ללימוד שפות",
+  "short_name": "לימוד שפות",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5fbfa",
+  "theme_color": "#087f8c",
+  "description": "לימוד תאית ואנגלית"
+}
