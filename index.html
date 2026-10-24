@@ -73,12 +73,25 @@ header{padding:8px 4px 18px;gap:12px}
 
 </style>
 <title>מסע ללימוד שפות</title>
+<script>
+/* One-time refresh helper: remove stale service workers from earlier versions. */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then(rs => {
+    if (rs.length) Promise.all(rs.map(r => r.unregister())).then(() => {
+      if (!sessionStorage.getItem("language-app-refresh-v2")) {
+        sessionStorage.setItem("language-app-refresh-v2","1");
+        location.reload();
+      }
+    });
+  }).catch(()=>{});
+}
+</script>
 </head>
 <body>
 <div class="shell">
 <header><span class="logo">🌍</span><div><strong>מסע ללימוד שפות</strong><small>לומדים בקצב שלך</small></div></header>
 <main id="app"></main>
-<footer><span>אפשרות לשימוש לא מקוון לאחר טעינה ראשונה</span><span id="status">מוכן</span></footer>
+<footer><span>גרסה מעודכנת · לימוד שפות</span><span id="status">מוכן</span></footer>
 </div>
 <script>
 const categories=[
