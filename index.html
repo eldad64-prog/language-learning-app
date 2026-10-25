@@ -337,7 +337,24 @@ const sameCategory=phrases[s.lang].filter(x=>x[0]===s.cat&&x!==p);const choices=
 const mode=s.lessonMode||"learn";app.innerHTML='<div class="between"><button class="back" data-action="cats">← קטגוריות</button><button class="back" data-action="mode-back">← שלב קודם</button><span class="muted">'+(s.index+1)+' מתוך '+items.length+'</span></div><section class="panel"><div class="muted">'+(s.lang==="thai"?"🇹🇭 תאית":"🇺🇸 אנגלית")+' · '+(categories.find(c=>c[0]===s.cat)||[])[2]+'</div><div style="display:flex;gap:7px;margin:16px 0;flex-wrap:wrap"><span style="padding:7px 10px;border-radius:12px;background:'+(mode==="learn"?"#087f8c":"#e8f1f2")+';color:'+(mode==="learn"?"white":"#24383c")+'">1 📘 לימוד</span><span style="padding:7px 10px;border-radius:12px;background:'+(mode==="practice"?"#087f8c":"#e8f1f2")+';color:'+(mode==="practice"?"white":"#24383c")+'">2 🗣️ תרגול</span><span style="padding:7px 10px;border-radius:12px;background:'+(mode==="recall"?"#087f8c":"#e8f1f2")+';color:'+(mode==="recall"?"white":"#24383c")+'">3 🧠 זיכרון</span></div><button class="back" data-action="mode-back" style="display:block;width:100%;margin:8px 0 14px;padding:13px;font-size:16px;border:1px solid #b9dfe0;background:#eef9f8">← חזרה לשלב הקודם</button><div style="text-align:center;padding:16px 10px"><div class="muted" style="font-size:14px">'+(mode==="learn"?"שלב 1 · למד והקשב":mode==="practice"?"שלב 2 · הקשב וחזור בקול":"שלב 3 · נסה להיזכר לפני החשיפה")+'</div><div class="phrase" style="font-size:28px;margin:18px 0">'+(mode==="learn"?"למד לומר: "+p[3]:p[3])+'</div>'+(mode==="learn"?'<div style="padding:18px;background:#e6f5f4;border-radius:16px;margin:14px 0"><div class="phrase">'+p[1]+'</div>'+(s.lang==="thai"?'<div class="roman">'+p[2]+'</div>':'')+'<p style="margin:8px 0 0">הקשב להגייה וחזור בקול כמה פעמים.</p></div>'+button("🔊 השמע הגייה","speak","blue")+button("הבנתי — לתרגול פעיל →","mode-practice","light"):mode==="practice"?'<div style="padding:18px;background:#e6f5f4;border-radius:16px;margin:14px 0"><div class="phrase">'+p[1]+'</div>'+(s.lang==="thai"?'<div class="roman">'+p[2]+'</div>':'')+'<p>הקשב וחזור בקול, ואז נסה לומר בלי להסתכל.</p></div>'+button("🔊 השמע שוב","speak","blue")+button("🗣️ שיחה פעילה","conversation","light")+button("עברתי לתרגול זיכרון →","mode-recall","blue"):'<div style="padding:18px;background:#e6f5f4;border-radius:16px;margin:14px 0"><div class="muted">נסה לומר את המשפט לפני שתציג אותו.</div>'+(s.revealed?'<div class="phrase">'+p[1]+'</div>'+(s.lang==="thai"?'<div class="roman">'+p[2]+'</div>':''):'')+'</div>'+(s.revealed?button("🔊 השמע ובדוק","speak","blue")+button("✅ הצלחתי להיזכר","knew","blue")+button("🔁 צריך לתרגל","review","light"):button("👁️ הצג תשובה והגייה","reveal","blue")) )+'</div><div class="actions">'+button(fav.includes(id(p))?"★ נשמר":"☆ מועדפים","favorite","blue")+button("＋ הוסף לרשימת חזרה","learned","light")+'</div></section><div class="actions">'+button("→ הבא","next")+button("הקודם","prev","blue")+'</div>';
 }
 app.addEventListener("click",e=>{const b=e.target.closest("[data-action]");if(!b)return;const a=b.dataset.action;
-if(a==="user-eldad"||a==="user-liora"){s.user=a==="user-eldad"?"eldad":"liora";db[s.user+"-lastVisit"]=new Date().toISOString();save();s.lang=null;s.cat=null}
+if(a==="user-eldad"||a==="user-liora"){
+ if(a==="user-eldad"){
+   const pinKey="eldad-private-pin-v1";
+   let savedPin=localStorage.getItem(pinKey);
+   if(!savedPin){
+     const newPin=prompt("הגדרת קוד אישי לאלדד (4 ספרות לפחות):");
+     if(newPin===null)return;
+     if(!/^\\d{4,8}$/.test(newPin)){alert("יש לבחור קוד בן 4 עד 8 ספרות.");return}
+     localStorage.setItem(pinKey,newPin);savedPin=newPin;
+     alert("הקוד האישי נשמר במכשיר זה. בכניסה הבאה תידרש להזין אותו.");
+   }else{
+     const entered=prompt("כרטיס אלדד נעול. הזן קוד אישי:");
+     if(entered===null||entered!==savedPin){alert("קוד שגוי. הכרטיס נשאר נעול.");return}
+   }
+ }
+ s.user=a==="user-eldad"?"eldad":"liora";
+ db[s.user+"-lastVisit"]=new Date().toISOString();save();s.lang=null;s.cat=null
+}
 else if(a==="home"){s={user:null,lang:null,cat:null,index:0}}
 else if(a==="langs"){s.lang=null;s.cat=null}
 else if(a==="lang-thai"||a==="lang-english"){s.lang=a.slice(5);s.cat=null}
