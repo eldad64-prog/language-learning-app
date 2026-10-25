@@ -348,10 +348,10 @@ async function verifyEldad(){
    try{
     const cred=await navigator.credentials.create({publicKey:{challenge:randomChallenge(),rp:{name:"אפליקציית הלימוד",id:location.hostname},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:"eldad",displayName:"אלדד"},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",residentKey:"preferred",userVerification:"required"},timeout:60000,attestation:"none"}});
     if(cred){localStorage.setItem(bioKey,b64u(cred.rawId));alert("הזיהוי הביומטרי הופעל במכשיר זה.");return true}
-   }catch(err){if(err&&err.name==="NotAllowedError")return false}
+   }catch(err){/* fallback to PIN */}
   }else{
    try{const assertion=await navigator.credentials.get({publicKey:{challenge:randomChallenge(),allowCredentials:[{type:"public-key",id:fromB64u(stored)}],userVerification:"required",timeout:60000}});if(assertion)return true}
-   catch(err){if(err&&err.name==="NotAllowedError")return false}
+   catch(err){/* fallback to PIN */}
   }
  }
  let savedPin=localStorage.getItem(pinKey);
