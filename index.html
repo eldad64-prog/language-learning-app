@@ -344,7 +344,7 @@ if(a==="user-eldad"||a==="user-liora"){
    if(!savedPin){
      const newPin=prompt("הגדרת קוד אישי לאלדד (4 ספרות לפחות):");
      if(newPin===null)return;
-     if(!/^\\d{4,8}$/.test(newPin)){alert("יש לבחור קוד בן 4 עד 8 ספרות.");return}
+     if(!/^\d{4,8}$/.test(newPin)){alert("יש לבחור קוד בן 4 עד 8 ספרות.");return}
      localStorage.setItem(pinKey,newPin);savedPin=newPin;
      alert("הקוד האישי נשמר במכשיר זה. בכניסה הבאה תידרש להזין אותו.");
    }else{
