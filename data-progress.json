@@ -1,0 +1,93 @@
+{
+  "updated_at": "2026-10-25",
+  "target_per_category": {
+    "paired_vocabulary_items": 1000,
+    "phrases_per_language": 100
+  },
+  "note": "Vocabulary entries are bilingual English–Thai pairs with Thai romanization and Hebrew meaning; phrase totals are counted separately for Thai and English.",
+  "completed": {
+    "paired_vocabulary_items": 150,
+    "vocabulary_by_category": {
+      "greetings": 15,
+      "food": 15,
+      "transport": 15,
+      "shopping": 15,
+      "hotel": 15,
+      "directions": 15,
+      "health": 15,
+      "money": 15,
+      "social": 15,
+      "work": 15
+    },
+    "thai_phrases": 66,
+    "thai_phrases_by_category": {
+      "greetings": 9,
+      "food": 8,
+      "transport": 7,
+      "shopping": 6,
+      "hotel": 6,
+      "directions": 6,
+      "health": 6,
+      "money": 6,
+      "social": 6,
+      "work": 6
+    },
+    "english_phrases": 65,
+    "english_phrases_by_category": {
+      "greetings": 8,
+      "food": 8,
+      "transport": 7,
+      "shopping": 6,
+      "hotel": 6,
+      "directions": 6,
+      "health": 6,
+      "money": 6,
+      "social": 6,
+      "work": 6
+    }
+  },
+  "this_batch": {
+    "paired_vocabulary_items_added": 100,
+    "thai_phrases_added": 50,
+    "english_phrases_added": 50,
+    "duplicates_detected_in_batch": 0
+  },
+  "remaining_by_category": {
+    "paired_vocabulary_items": {
+      "greetings": 985,
+      "food": 985,
+      "transport": 985,
+      "shopping": 985,
+      "hotel": 985,
+      "directions": 985,
+      "health": 985,
+      "money": 985,
+      "social": 985,
+      "work": 985
+    },
+    "thai_phrases": {
+      "greetings": 91,
+      "food": 92,
+      "transport": 93,
+      "shopping": 94,
+      "hotel": 94,
+      "directions": 94,
+      "health": 94,
+      "money": 94,
+      "social": 94,
+      "work": 94
+    },
+    "english_phrases": {
+      "greetings": 92,
+      "food": 92,
+      "transport": 93,
+      "shopping": 94,
+      "hotel": 94,
+      "directions": 94,
+      "health": 94,
+      "money": 94,
+      "social": 94,
+      "work": 94
+    }
+  }
+}
