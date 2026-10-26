@@ -1,38 +1,38 @@
 {
-  "updated_at": "2026-10-25",
+  "updated_at": "2026-10-26",
   "target_per_category": {
     "paired_vocabulary_items": 1000,
     "phrases_per_language": 100
   },
-  "note": "Vocabulary entries are bilingual English–Thai pairs with Thai romanization and Hebrew meaning; phrase totals are counted separately for Thai and English.",
+  "note": "Vocabulary entries are bilingual English–Thai pairs with Thai romanization and Hebrew meaning; phrase totals are counted separately for Thai and English. Counts reflect the current index.html data arrays and are updated after duplicate and syntax checks.",
   "completed": {
-    "paired_vocabulary_items": 150,
+    "paired_vocabulary_items": 200,
     "vocabulary_by_category": {
-      "greetings": 15,
-      "food": 15,
-      "transport": 15,
-      "shopping": 15,
-      "hotel": 15,
-      "directions": 15,
-      "health": 15,
-      "money": 15,
-      "social": 15,
-      "work": 15
+      "greetings": 20,
+      "food": 20,
+      "transport": 20,
+      "shopping": 20,
+      "hotel": 20,
+      "directions": 20,
+      "health": 20,
+      "money": 20,
+      "social": 20,
+      "work": 20
     },
-    "thai_phrases": 66,
+    "thai_phrases": 116,
     "thai_phrases_by_category": {
-      "greetings": 9,
-      "food": 8,
-      "transport": 7,
-      "shopping": 6,
-      "hotel": 6,
-      "directions": 6,
-      "health": 6,
-      "money": 6,
-      "social": 6,
-      "work": 6
+      "greetings": 14,
+      "food": 13,
+      "transport": 12,
+      "shopping": 11,
+      "hotel": 11,
+      "directions": 11,
+      "health": 11,
+      "money": 11,
+      "social": 11,
+      "work": 11
     },
-    "english_phrases": 65,
+    "english_phrases": 115,
     "english_phrases_by_category": {
       "greetings": 8,
       "food": 8,
@@ -47,35 +47,78 @@
     }
   },
   "this_batch": {
-    "paired_vocabulary_items_added": 100,
+    "paired_vocabulary_items_added": 50,
     "thai_phrases_added": 50,
     "english_phrases_added": 50,
-    "duplicates_detected_in_batch": 0
+    "vocabulary_added_by_category": {
+      "greetings": 5,
+      "food": 5,
+      "transport": 5,
+      "shopping": 5,
+      "hotel": 5,
+      "directions": 5,
+      "health": 5,
+      "money": 5,
+      "social": 5,
+      "work": 5
+    },
+    "thai_phrases_added_by_category": {
+      "greetings": 5,
+      "food": 5,
+      "transport": 5,
+      "shopping": 5,
+      "hotel": 5,
+      "directions": 5,
+      "health": 5,
+      "money": 5,
+      "social": 5,
+      "work": 5
+    },
+    "english_phrases_added_by_category": {
+      "greetings": 5,
+      "food": 5,
+      "transport": 5,
+      "shopping": 5,
+      "hotel": 5,
+      "directions": 5,
+      "health": 5,
+      "money": 5,
+      "social": 5,
+      "work": 5
+    },
+    "duplicates_detected_in_batch": 0,
+    "validation": {
+      "required_fields_checked": true,
+      "exact_duplicates_checked_against_existing_data": true,
+      "javascript_syntax_check": "pass",
+      "user_progress_storage_schema_changed": false,
+      "visual_design_changed": false
+    }
   },
   "remaining_by_category": {
     "paired_vocabulary_items": {
-      "greetings": 985,
-      "food": 985,
-      "transport": 985,
-      "shopping": 985,
-      "hotel": 985,
-      "directions": 985,
-      "health": 985,
-      "money": 985,
-      "social": 985,
-      "work": 985
+      "greetings": 980,
+      "food": 980,
+      "transport": 980,
+      "shopping": 980,
+      "hotel": 980,
+      "directions": 980,
+      "health": 980,
+      "money": 980,
+      "social": 980,
+      "work": 980
     },
     "thai_phrases": {
-      "greetings": 91,
-      "food": 92,
-      "transport": 93,
-      "shopping": 94,
-      "hotel": 94,
-      "directions": 94,
-      "health": 94,
-      "money": 94,
-      "social": 94,
-      "work": 94
+      "greetings": 86,
+      "food": 87,
+      "transport": 88,
+      "shopping": 89,
+      "hotel": 89,
+      "directions": 89,
+      "health": 89,
+      "money": 89,
+      "social": 89,
+      "work": 89
     },
     "english_phrases": {
       "greetings": 92,
