@@ -183,6 +183,23 @@ body{background:linear-gradient(180deg,#e0f4f1 0%,#f7fbfa 42%,#e9f5f3 100%)}
  .languages>.lang-card .btn.light{min-height:64px}
 }
 
+
+/* Always-available floating refresh control */
+#floating-refresh{
+ position:fixed;left:18px;bottom:calc(24px + env(safe-area-inset-bottom,0px));
+ z-index:99999;width:62px;height:62px;border:0;border-radius:50%;
+ display:flex;align-items:center;justify-content:center;
+ background:linear-gradient(145deg,#121a1c,#000);
+ color:#fff;font-size:31px;font-weight:800;line-height:1;
+ box-shadow:0 5px 0 #48585b,0 9px 20px rgba(0,0,0,.28);
+ cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+ transition:transform .12s ease,box-shadow .12s ease;
+}
+#floating-refresh:active{transform:translateY(4px);box-shadow:0 1px 0 #48585b,0 3px 8px rgba(0,0,0,.22)}
+#floating-refresh:focus-visible{outline:3px solid #f4c85c;outline-offset:4px}
+#floating-refresh:disabled{opacity:.75}
+@media(max-width:420px){#floating-refresh{left:14px;bottom:calc(20px + env(safe-area-inset-bottom,0px));width:58px;height:58px;font-size:29px}}
+
 </style>
 <title>מסע ללימוד שפות</title>
 <script>
@@ -203,6 +220,7 @@ if ("serviceWorker" in navigator) {
 <div class="shell">
 <header><span class="logo">🌍</span><div><strong>מסע ללימוד שפות</strong><small>לומדים בקצב שלך</small></div></header>
 <main id="app"></main>
+<button id="floating-refresh" type="button" data-action="refresh-app" aria-label="רענון ועדכון האפליקציה" title="רענון ועדכון האפליקציה">↻</button>
 <footer><span>גרסה מעודכנת · לימוד שפות</span><span id="status">מוכן</span></footer>
 </div>
 <script>
@@ -1065,7 +1083,7 @@ function speakText(text,language){
  }catch(err){alert("לא ניתן להפעיל השמעה כרגע. נסה שוב לאחר רענון הדף.");return false}
 }
 document.addEventListener("click",async e=>{const target=e.target&&e.target.nodeType===1?e.target:e.target&&e.target.parentElement;const b=target&&target.closest?target.closest("[data-action]"):null;if(!b||!document.documentElement.contains(b))return;e.preventDefault();const a=b.dataset.action;
-if(a==="refresh-app"){if(s.refreshing)return;s.refreshing=true;b.disabled=true;b.textContent="⏳ טוען גרסה עדכנית...";b.style.opacity=".75";const stamp=Date.now().toString();const url=new URL(location.href);url.searchParams.set("v",stamp);url.searchParams.set("refresh",stamp);url.hash="";try{if("serviceWorker"in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}}catch(err){}try{await fetch(url.pathname+url.search,{cache:"no-store",credentials:"same-origin"})}catch(err){}location.replace(url.href);return}
+if(a==="refresh-app"){if(s.refreshing)return;s.refreshing=true;b.disabled=true;b.setAttribute("aria-busy","true");b.innerHTML="⏳";const stamp=Date.now().toString();const url=new URL(location.href);url.searchParams.set("v",stamp);url.searchParams.set("refresh",stamp);url.hash="";try{if("serviceWorker"in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}}catch(err){}try{if("caches"in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)))}}catch(err){}location.href=url.href;return}
 if(a==="user-eldad"||a==="user-liora"){
  if(a==="user-eldad"&&!(await verifyEldad()))return;
  s.user=a==="user-eldad"?"eldad":"liora";
