@@ -108,6 +108,49 @@ button[data-action="refresh-app"]:before{content:"↻";font-size:21px;font-weigh
 }
 @media(prefers-reduced-motion:reduce){.btn,.profile{transition:none}}
 
+
+/* Friendlier language-choice screen: consistent, tactile buttons */
+body{background:linear-gradient(180deg,#e0f4f1 0%,#f7fbfa 42%,#e9f5f3 100%)}
+.languages{gap:14px}
+.lang-card{border-radius:27px;box-shadow:0 10px 0 rgba(17,67,73,.12),0 16px 28px rgba(17,67,73,.12);border:1px solid rgba(255,255,255,.85)}
+.lang-card:before{background:linear-gradient(180deg,rgba(10,43,49,.08) 0%,rgba(8,42,48,.26) 42%,rgba(5,31,37,.82) 100%)}
+.languages .lang-card .btn,
+.languages .lang-card .btn.blue,
+.languages .lang-card .btn.pink,
+.languages .lang-card .btn.light{
+  color:#fff!important;
+  background:linear-gradient(180deg,#16a0a5 0%,#087f8c 58%,#06636f 100%)!important;
+  border:1px solid rgba(255,255,255,.3)!important;
+  border-radius:16px!important;
+  min-height:66px;
+  padding:12px 10px;
+  font-size:16px;
+  font-weight:850;
+  line-height:1.25;
+  text-shadow:0 1px 2px rgba(0,0,0,.18);
+  box-shadow:0 6px 0 #064f59,0 9px 15px rgba(0,25,30,.24)!important;
+  transform:translateY(0);
+  transition:transform .12s ease,box-shadow .12s ease,filter .12s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.languages .lang-card .btn:active,
+.languages .lang-card .btn.blue:active,
+.languages .lang-card .btn.light:active{
+  transform:translateY(5px)!important;
+  box-shadow:0 1px 0 #064f59,0 3px 7px rgba(0,25,30,.18)!important;
+  filter:brightness(.96);
+}
+.languages .lang-card .btn:focus-visible{outline:3px solid #ffe08a;outline-offset:3px}
+.languages .lang-card .actions{gap:12px}
+@media(hover:hover){
+ .languages .lang-card .btn:hover{filter:brightness(1.08);transform:translateY(-2px);box-shadow:0 8px 0 #064f59,0 12px 18px rgba(0,25,30,.24)!important}
+}
+@media(max-width:390px){
+ .languages{gap:10px}
+ .languages .lang-card .btn{font-size:14px;min-height:60px;padding:10px 7px}
+ .languages .lang-card .actions{gap:9px}
+}
+
 </style>
 <title>מסע ללימוד שפות</title>
 <script>
@@ -883,7 +926,7 @@ const id=p=>s.lang+"|"+p[0]+"|"+p[1];
 function button(label,action,cls=""){return '<button type="button" class="btn '+cls+'" data-action="'+action+'">'+label+'</button>'}
 function render(){
 if(!s.user){app.innerHTML='<section class="hero home-hero"><div class="emoji">🌍🌴</div><h1>ברוכים הבאים</h1><p>לימוד שפות בדרך שלך</p></section><button class="btn light" data-action="refresh-app" style="margin:0 0 14px;border:1px solid #cfe4e2;min-height:56px;font-weight:800">🔄 רענון ועדכון האפליקציה</button><div style="font-size:12px;text-align:center;color:#607d80;margin:-7px 0 12px">לחיצה תציג הודעת טעינה ותטען מחדש את הגרסה העדכנית</div><section class="panel"><h2 style="text-align:center;margin:0 0 8px">מי יוצא למסע היום?</h2><p style="text-align:center;color:var(--muted);margin:0 0 14px">בחרו פרופיל והמשיכו ללמוד בקצב שלכם</p><div class="profiles"><article class="profile eldad-profile"><div class="avatar" aria-hidden="true"></div><h3>אלדד</h3><small style="color:#fff">המסע האישי שלי</small>'+profileStats("eldad")+button("המשך אלדד","user-eldad")+'</article><article class="profile liora-profile"><div class="avatar" aria-hidden="true"></div><h3>ליאורה</h3><small style="color:#fff">המסע האישי שלי</small>'+profileStats("liora")+button("המשך ליאורה","user-liora","pink")+'</article></div></section>';return}
-if(!s.lang){app.innerHTML='<div class="between"><button class="back" data-action="home">← חזרה</button><span class="muted">פרופיל: '+who()+'</span></div><section class="hero"><div class="emoji">👋</div><h1>שלום '+who()+'</h1><p>בחר שפה ודרך לימוד</p></section><div class="languages"><article class="lang-card thai-card"><div class="avatar">🇹🇭</div><h3>תאית</h3><p>לומדים תאית צעד אחר צעד</p><div class="actions">'+button("📘 משפטים","thai-sentences")+button("📚 מילים","thai-words","blue")+'</div><div class="actions" style="grid-template-columns:1fr;margin-top:8px">'+button("🗣️ המשפטים שלי","thai-my-items","light")+'</div></article><article class="lang-card usa-card"><div class="avatar">🇺🇸</div><h3>אנגלית</h3><p>שיחות, נסיעות ועבודה</p><div class="actions">'+button("📘 משפטים","english-sentences")+button("📚 מילים","english-words","blue")+'</div><div class="actions" style="grid-template-columns:1fr;margin-top:8px">'+button("🗣️ המשפטים שלי","english-my-items","light")+'</div></article></div><section class="panel"><h3>ההתקדמות שלי</h3><p>תאית: '+(db[s.user+"-thai"]||[]).length+' משפטים נלמדו</p><p>אנגלית: '+(db[s.user+"-english"]||[]).length+' משפטים נלמדו</p><div class="note">ההתקדמות נשמרת במכשיר ובדפדפן הזה.</div></section>';return}
+if(!s.lang){app.innerHTML='<div class="between"><button class="back" data-action="home">← חזרה</button><span class="muted">פרופיל: '+who()+'</span></div><section class="hero"><div class="emoji">👋</div><h1>שלום '+who()+'</h1><p>בחר שפה ודרך לימוד</p></section><div class="languages"><article class="lang-card thai-card"><div class="avatar">🇹🇭</div><h3>תאית</h3><p>לומדים תאית צעד אחר צעד</p><div class="actions">'+button("📘 משפטים","thai-sentences")+button("📚 מילים","thai-words","blue")+'</div><div class="actions" style="grid-template-columns:1fr;margin-top:8px">'+button("🗣️ המשפטים שלי","thai-my-items","light")+'</div></article><article class="lang-card usa-card"><div class="avatar">🇺🇸</div><h3>אנגלית</h3><p>שיחות, נסיעות ועבודה</p><div class="actions">'+button("📘 משפטים","english-sentences")+button("📚 מילים","english-words","blue")+'</div><div class="actions" style="grid-template-columns:1fr;margin-top:8px">'+button("🗣️ המשפטים שלי","english-my-items","light")+'</div></article></div>';return}
 if(!s.cat){app.innerHTML='<div class="between"><button class="back" data-action="langs">← שפות</button><span class="muted">'+(s.lang==="thai"?"🇹🇭 תאית":"🇺🇸 אנגלית")+'</span></div><section class="hero language-hero '+(s.lang==="thai"?"phuket-theme":"america-theme")+'"><div class="emoji">'+(s.lang==="thai"?"🌴🇹🇭":"🗽🇺🇸")+'</div><h1>לומדים '+(s.lang==="thai"?"תאית":"אנגלית")+'</h1><p>איך תרצה להתחיל ללמוד היום?</p></section><div class="languages"><article class="lang-card thai-card"><div class="avatar">📘</div><h3>משפטים</h3><p>לימוד, תרגול וזיכרון לפי נושאים</p>'+button("התחל ללמוד משפטים","sentences")+'</article><article class="lang-card usa-card"><div class="avatar">📚</div><h3>מילים</h3><p>אוצר מילים שימושי לפי נושאים</p>'+button("התחל ללמוד מילים","words","blue")+'</article></div><div class="actions">'+button("🗣️ שיחה פעילה","conversation","blue")+button("📝 מבחן","test","blue")+button("⭐ מועדפים","favorites","light")+'</div><div class="actions">'+button("🗣️ המשפטים שלי","my-items","light")+button("🎮 משחקים ותרגילים","games","blue")+'</div>';return}
 if(s.cat==="__games"){app.innerHTML='<div class="between"><button class="back" data-action="cats">← חזרה לשפה</button><span>🎮 תרגול חווייתי</span></div><section class="hero language-hero '+(s.lang==="thai"?"phuket-theme":"america-theme")+'"><div class="emoji">🎯🎮</div><h1>משחקים ותרגילים</h1><p>לומדים דרך משחק, חזרה ואתגר</p></section><section class="panel"><h3>בחר אתגר</h3><p class="muted">השאלות נבחרות מכל אוצר המילים והמשפטים של השפה.</p><div class="actions">'+button("🎲 ערבוב הכול","games-mix","blue")+button("📚 משחק מילים","games-words","light")+button("💬 משחק משפטים","games-sentences","light")+button("🔊 האזנה ותרגול","games-listen","light")+'</div><div class="note">נוסיף בהמשך גם את המילים והמשפטים האישיים שלך למאגר המשחקים.</div></section>';return}if(s.cat==="__sentences"){const sq=(s.catalogSearch||"").trim().toLocaleLowerCase();const allP=phrases[s.lang]||[];const results=sq?allP.map((p,i)=>({p,i})).filter(o=>[o.p[1],o.p[2],o.p[3],categories.find(c=>c[0]===o.p[0])?.[2]||""].some(v=>String(v||"").toLocaleLowerCase().includes(sq))):[];app.innerHTML='<div class="between"><button class="back" data-action="cats">← חזרה ללימוד</button><span class="muted">'+(s.lang==="thai"?"🇹🇭 תאית":"🇺🇸 אנגלית")+'</span></div><section class="hero language-hero '+(s.lang==="thai"?"phuket-theme":"america-theme")+'"><div class="emoji">📘</div><h1>לימוד משפטים</h1><p>בחר נושא או חפש משפט מסוים</p></section><section class="panel"><h3>🔎 חיפוש משפט</h3><input id="catalog-search" value="'+escapeHtml(s.catalogSearch||"")+'" placeholder="חפש בעברית או בשפה הנלמדת..." style="width:100%;box-sizing:border-box;border:1px solid #cbdcdd;border-radius:14px;padding:12px;font:inherit"/><div class="actions">'+button("🔎 חפש","catalog-search","blue")+button("נקה","catalog-clear","light")+'</div>'+(sq?'<p class="muted">נמצאו '+results.length+' משפטים</p>'+(results.length?results.slice(0,50).map(o=>'<button class="answer" style="display:block;width:100%;text-align:right;margin:8px 0" data-action="open-search-phrase-'+o.i+'"><strong>'+escapeHtml(o.p[3])+'</strong><div style="margin-top:6px">'+escapeHtml(o.p[1])+'</div><small>'+escapeHtml((categories.find(c=>c[0]===o.p[0])||[])[2]||"")+'</small></button>').join(""):'<div class="note">לא נמצאו משפטים. נסה מילה אחרת.</div>'):'<p class="muted">אפשר לחפש בעברית, בתרגום או בשם הנושא.</p>')+'</section><div class="categories">'+categories.map(c=>'<button class="category" data-action="cat-'+c[0]+'"><span>'+c[1]+'</span><strong>'+c[2]+'</strong><small>'+allP.filter(p=>p[0]===c[0]).length+' משפטים</small></button>').join("")+'</div><div class="actions">'+button("🗣️ שיחה פעילה","conversation","blue")+button("📝 מבחן","test","blue")+button("⭐ מועדפים","favorites","light")+'</div>';return}
 if(s.cat==="__conversation"){const items=list();const p=items[Math.min(s.index||0,items.length-1)];app.innerHTML='<div class="between"><button class="back" data-action="cats">← קטגוריות</button><span>🗣️ שיחה פעילה</span></div><section class="panel"><div class="muted">סיטואציה יומיומית · '+(categories.find(c=>c[0]===s.catBefore)||[])[2]+'</div><h2 style="text-align:center">התור שלך לדבר</h2><div style="background:#eaf7f6;border-radius:18px;padding:18px;text-align:center"><div class="muted">נסה לומר את המשפט בעברית בראשך ואז בשפה הנלמדת</div><div class="phrase" style="font-size:25px;margin:14px 0">'+p[3]+'</div><div style="display:'+(s.convoReveal?"block":"none")+'"><div class="phrase">'+p[1]+'</div>'+(s.lang==="thai"?'<div class="roman">'+p[2]+'</div><div class="roman" style="color:#087f8c">הגייה בעברית (בקירוב): '+thaiToHebrew(p[2]) +'</div>':'<div class="roman">הגייה בעברית (בקירוב): '+englishToHebrew(p[1])+'</div>')+'</div></div><div class="actions">'+button("🔊 שמע הגייה","convo-speak","blue")+button(s.convoReveal?"הסתר":"הצג משפט והגייה","convo-reveal","light")+'</div><p>נסה לחזור בקול אחרי ההשמעה. אפשר להיעזר במיקרופון אם הדפדפן תומך בזיהוי דיבור.</p><div class="actions">'+button("🎙️ בדוק מה נאמר","convo-mic","blue")+button("🔁 שמע שוב","convo-speak","light")+'</div><div id="convo-feedback" class="note">'+(s.convoFeedback||"אין ציון ואין לחץ — מתרגלים שיחה בקצב שלך.")+'</div><div class="actions">'+button("↻ נסה שוב","convo-reset","light")+button("המשפט הבא →","convo-next","blue")+'</div></section>';return}
