@@ -893,8 +893,8 @@ async function verifyEldad(){
  if(!savedPin){const newPin=prompt("האימות הביומטרי אינו זמין. הגדר קוד בן 4–8 ספרות:");if(newPin===null)return false;if(!/^\d{4,8}$/.test(newPin)){alert("יש להזין 4 עד 8 ספרות.");return false}localStorage.setItem(pinKey,newPin);alert("הקוד נשמר במכשיר זה.");return true}
  const entered=prompt("האימות הביומטרי אינו זמין. הזן קוד אישי:");if(entered===null||entered!==savedPin){alert("קוד שגוי.");return false}return true;
 }
-app.addEventListener("click",async e=>{const b=e.target.closest("[data-action]");if(!b)return;const a=b.dataset.action;
-if(a==="refresh-app"){if(s.refreshing)return;s.refreshing=true;b.disabled=true;b.textContent="⏳ בודק עדכונים ומרענן...";b.style.opacity=".75";b.style.pointerEvents="none";const u=new URL(location.href);u.searchParams.set("refresh",String(Date.now()));u.searchParams.set("v","latest");setTimeout(()=>location.replace(u.toString()),350);return}
+document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("[data-action]");if(!b||!document.contains(b))return;const a=b.dataset.action;
+if(a==="refresh-app"){if(s.refreshing)return;s.refreshing=true;b.disabled=true;b.textContent="⏳ טוען גרסה חדשה...";b.style.opacity=".75";const stamp=Date.now().toString();const url=new URL(location.href);url.searchParams.set("v",stamp);url.searchParams.set("refresh",stamp);url.hash="";try{await fetch(url.toString(),{cache:"no-store",headers:{"Cache-Control":"no-cache"}})}catch(err){}location.replace(url.toString());return}
 if(a==="user-eldad"||a==="user-liora"){
  if(a==="user-eldad"&&!(await verifyEldad()))return;
  s.user=a==="user-eldad"?"eldad":"liora";
