@@ -71,6 +71,43 @@ header{padding:8px 4px 18px;gap:12px}
 .phrase{padding:8px 0;font-size:clamp(27px,6vw,36px)}
 @media(max-width:390px){.shell{padding:10px}.home-hero{min-height:220px}.lang-card{min-height:205px;padding:13px 9px}.language-hero{min-height:205px}.category{min-height:125px;padding:12px 10px}.panel{padding:16px}}
 
+
+/* Opening screen buttons: welcoming, clear and touch-friendly */
+.btn{
+  position:relative;display:flex;align-items:center;justify-content:center;gap:9px;
+  min-height:54px;padding:14px 18px;margin-top:12px;border-radius:17px;
+  font-size:16px;font-weight:800;letter-spacing:.1px;line-height:1.25;
+  background:linear-gradient(135deg,#0799a0,#08717f);
+  box-shadow:0 7px 16px rgba(8,127,140,.22);
+  border:1px solid rgba(255,255,255,.45);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
+}
+.btn.blue{background:linear-gradient(135deg,#4389f3,#245dc5);box-shadow:0 7px 16px rgba(40,104,216,.22)}
+.btn.pink{background:linear-gradient(135deg,#dc78ad,#b94a8e);box-shadow:0 7px 16px rgba(188,108,148,.28)}
+.btn.light{color:#17616a;background:linear-gradient(135deg,#f3fffd,#dff5f1);border:1px solid #c8e7e2;box-shadow:0 5px 13px rgba(24,90,92,.09)}
+.btn:active{transform:scale(.975);filter:brightness(.97);box-shadow:0 3px 8px rgba(10,65,75,.15)}
+.btn:focus-visible,.back:focus-visible,.category:focus-visible,.answer:focus-visible{outline:3px solid #f3b34b;outline-offset:3px}
+.profiles{gap:14px}
+.profile{transition:transform .18s ease,box-shadow .18s ease;border:1px solid rgba(255,255,255,.78);box-shadow:0 12px 26px rgba(15,65,72,.16)}
+.profile .btn{width:100%;min-height:52px;margin-top:14px;border-radius:16px;font-size:15px}
+.profile .btn:after{content:"←";font-size:18px;line-height:1;opacity:.95}
+.profile h3{letter-spacing:.2px;text-shadow:0 2px 12px rgba(0,0,0,.25)}
+.profile small{font-size:13px;font-weight:650;text-shadow:0 1px 8px rgba(0,0,0,.3)}
+button[data-action="refresh-app"]{border-radius:17px!important;background:linear-gradient(135deg,#ffffff,#e8f8f5)!important;color:#17616a!important;box-shadow:0 6px 16px rgba(17,90,94,.10)!important;font-size:15px!important}
+button[data-action="refresh-app"]:before{content:"↻";font-size:21px;font-weight:900;line-height:1}
+@media(hover:hover){
+ .btn:hover{transform:translateY(-2px);filter:brightness(1.04);box-shadow:0 10px 22px rgba(8,80,95,.2)}
+ .profile:hover{transform:translateY(-2px);box-shadow:0 16px 32px rgba(15,65,72,.2)}
+}
+@media(max-width:390px){
+ .profiles{gap:10px}
+ .profile{min-height:238px;padding:14px 9px}
+ .profile .btn{font-size:14px;padding:12px 8px}
+ .btn{min-height:52px}
+}
+@media(prefers-reduced-motion:reduce){.btn,.profile{transition:none}}
+
 </style>
 <title>מסע ללימוד שפות</title>
 <script>
