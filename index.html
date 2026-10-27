@@ -1005,8 +1005,33 @@ async function verifyEldad(){
  if(!savedPin){const newPin=prompt("האימות הביומטרי אינו זמין. הגדר קוד בן 4–8 ספרות:");if(newPin===null)return false;if(!/^\d{4,8}$/.test(newPin)){alert("יש להזין 4 עד 8 ספרות.");return false}localStorage.setItem(pinKey,newPin);alert("הקוד נשמר במכשיר זה.");return true}
  const entered=prompt("האימות הביומטרי אינו זמין. הזן קוד אישי:");if(entered===null||entered!==savedPin){alert("קוד שגוי.");return false}return true;
 }
+function speakText(text,language){
+ const value=String(text||"").trim();
+ if(!value){alert("אין טקסט להשמעה.");return false}
+ if(!("speechSynthesis"in window)||typeof SpeechSynthesisUtterance==="undefined"){
+  alert("הקראה קולית אינה זמינה בדפדפן הזה. נסה לפתוח את האפליקציה ב-Chrome.");
+  return false;
+ }
+ try{
+  const engine=window.speechSynthesis;
+  engine.cancel();
+  const utterance=new SpeechSynthesisUtterance(value);
+  utterance.lang=language==="thai"?"th-TH":"en-US";
+  utterance.rate=.82;
+  utterance.volume=1;
+  utterance.pitch=1;
+  let voices=engine.getVoices();
+  const prefix=language==="thai"?"th":"en";
+  const matching=voices.find(v=>String(v.lang||"").toLowerCase()===utterance.lang.toLowerCase())||voices.find(v=>String(v.lang||"").toLowerCase().startsWith(prefix));
+  if(matching)utterance.voice=matching;
+  utterance.onerror=()=>{alert("המכשיר לא הצליח להשמיע את המשפט. בדוק שעוצמת המדיה פעילה ושקולית "+(language==="thai"?"תאית":"אנגלית")+" מותקנת במכשיר.");};
+  engine.speak(utterance);
+  setTimeout(()=>{if(engine.speaking||engine.pending)return;const retryVoices=engine.getVoices();if(retryVoices.length&&!engine.speaking&&!engine.pending){const v=retryVoices.find(x=>String(x.lang||"").toLowerCase()===utterance.lang.toLowerCase())||retryVoices.find(x=>String(x.lang||"").toLowerCase().startsWith(prefix));if(v)utterance.voice=v;try{engine.speak(utterance)}catch(e){}}},700);
+  return true;
+ }catch(err){alert("לא ניתן להפעיל השמעה כרגע. נסה שוב לאחר רענון הדף.");return false}
+}
 document.addEventListener("click",async e=>{const target=e.target&&e.target.nodeType===1?e.target:e.target&&e.target.parentElement;const b=target&&target.closest?target.closest("[data-action]"):null;if(!b||!document.documentElement.contains(b))return;e.preventDefault();const a=b.dataset.action;
-if(a==="refresh-app"){if(s.refreshing)return;s.refreshing=true;b.disabled=true;b.textContent="⏳ מנקה מטמון וטוען מחדש...";b.style.opacity=".75";const stamp=Date.now().toString();try{if("serviceWorker"in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}if("caches"in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)))}}catch(err){}const url=new URL(location.href);url.searchParams.set("v",stamp);url.searchParams.set("refresh",stamp);url.hash="";location.replace(url.toString());return}
+if(a==="refresh-app"){if(s.refreshing)return;s.refreshing=true;b.disabled=true;b.textContent="⏳ טוען גרסה עדכנית...";b.style.opacity=".75";const stamp=Date.now().toString();const url=new URL(location.href);url.searchParams.set("v",stamp);url.searchParams.set("refresh",stamp);url.hash="";try{if("serviceWorker"in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}}catch(err){}try{await fetch(url.pathname+url.search,{cache:"no-store",credentials:"same-origin"})}catch(err){}location.replace(url.href);return}
 if(a==="user-eldad"||a==="user-liora"){
  if(a==="user-eldad"&&!(await verifyEldad()))return;
  s.user=a==="user-eldad"?"eldad":"liora";
@@ -1041,12 +1066,12 @@ else if(a==="thai-my-items"||a==="english-my-items"){s.lang=a.startsWith("thai")
  else if(a.startsWith("open-search-word-")){const ix=Number(a.slice("open-search-word-".length));const w=vocabulary[ix];if(!w)return;s.contentType="words";s.cat="word-"+w[0];const p=s.lang==="thai"?[w[0],w[2],w[3],w[4]]:[w[0],w[1],englishToHebrew(w[1]),w[4]];s.sessionOrder=[p];s.sessionOrderKey=[s.user,s.lang,s.contentType,s.cat,s.catBefore||""].join("|");s.index=0;s.lessonMode="learn";s.revealed=false;s.catalogSearch="";render();return}
  else if(a==="custom-lesson-save"){if(s.customPreviewSaved)return;const he=(s.previewHe||"").trim(),target=(s.previewTarget||"").trim(),pron=(s.previewPron||"").trim();if(!he||!target){alert("חסר משפט או תרגום לשמירה.");return}const ck=s.user+"-"+s.lang+"-customItems";db[ck]??=[];const item={id:Date.now().toString(),he,target,pron,createdAt:new Date().toISOString()};db[ck].push(item);save();s.customPreviewSaved=true;const p=list()[s.index];if(p)p[4]=item.id;render();return}
  else if(a==="translation-back"){s.cat="__my-items";render();setTimeout(()=>{const he=document.querySelector("#custom-he"),target=document.querySelector("#custom-target"),pron=document.querySelector("#custom-pron");if(he)he.value=s.previewHe||"";if(target)target.value=s.previewTarget||"";if(pron)pron.value=s.previewPron||""},0);return}
- else if(a==="translation-speak"){const target=s.previewTarget||"";if(target&&"speechSynthesis"in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(target);u.lang=s.lang==="thai"?"th-TH":"en-US";u.rate=.82;speechSynthesis.speak(u)}return}
+ else if(a==="translation-speak"){const target=s.previewTarget||"";if(target)speakText(target,s.lang);else alert("אין טקסט להשמעה.");return}
  else if(a==="translation-save"){const he=(s.previewHe||"").trim(),target=(s.previewTarget||"").trim(),pron=(s.previewPron||"").trim();if(!he||!target){alert("חסר משפט או תרגום לשמירה.");return}const ck=s.user+"-"+s.lang+"-customItems";db[ck]??=[];const item={id:Date.now().toString(),he,target,pron,createdAt:new Date().toISOString()};db[ck].push(item);save();s.customSearch="";s.cat="__custom-learning";s.contentType="sentences";s.sessionOrder=[["__custom-learning",target,pron,he,item.id]];s.sessionOrderKey=[s.user,s.lang,s.contentType,s.cat,s.catBefore||""].join("|");s.index=0;s.lessonMode="learn";s.revealed=false;render();return}
- else if(a==="custom-preview"){const target=(document.querySelector("#custom-target")||{}).value?.trim();if(!target){alert("תחילה מלא את התרגום.");return}if("speechSynthesis"in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(target);u.lang=s.lang==="thai"?"th-TH":"en-US";u.rate=.82;speechSynthesis.speak(u)}else alert("הקראה קולית אינה נתמכת בדפדפן זה.");return}
+ else if(a==="custom-preview"){const target=(document.querySelector("#custom-target")||{}).value?.trim();if(!target){alert("תחילה מלא את התרגום.");return}speakText(target,s.lang);return}
  else if(a.startsWith("custom-edit-")){const ix=Number(a.slice("custom-edit-".length));const ck=s.user+"-"+s.lang+"-customItems";const x=(db[ck]||[])[ix];if(!x)return;s.editingCustomId=x.id;render();setTimeout(()=>{const he=document.querySelector("#custom-he"),target=document.querySelector("#custom-target"),pron=document.querySelector("#custom-pron");if(he)he.value=x.he;if(target)target.value=x.target;if(pron)pron.value=x.pron||"";const status=document.querySelector("#custom-status");if(status)status.textContent="מצב עריכה: עדכן את השדות ולחץ שמור שינויים."},0);return}
  else if(a.startsWith("custom-practice-")){const ix=Number(a.slice("custom-practice-".length));if(s.practiceItem===ix&&!s.customReveal){s.customReveal=true}else{s.practiceItem=ix;s.customReveal=false}render();return}
- else if(a.startsWith("custom-speak-")){const ix=Number(a.slice("custom-speak-".length));const x=(db[s.user+"-"+s.lang+"-customItems"]||[])[ix];if(x&&"speechSynthesis"in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(x.target);u.lang=s.lang==="thai"?"th-TH":"en-US";u.rate=.82;speechSynthesis.speak(u)}return}
+ else if(a.startsWith("custom-speak-")){const ix=Number(a.slice("custom-speak-".length));const x=(db[s.user+"-"+s.lang+"-customItems"]||[])[ix];if(x&&x.target)speakText(x.target,s.lang);else alert("לא נמצא משפט להשמעה.");return}
  else if(a.startsWith("custom-delete-")){const ix=Number(a.slice("custom-delete-".length));const ck=s.user+"-"+s.lang+"-customItems";db[ck]=(db[ck]||[]).filter((x,i)=>i!==ix);save();render();return}
  else if(a==="my-items"){s.cat="__my-items";s.myItemType="sentence"}
  else if(a==="games"){s.cat="__games"}
@@ -1058,7 +1083,7 @@ else if(a==="conversation"){s.catBefore=s.cat;s.cat="__conversation";s.index=0;s
 else if(a==="convo-reveal"){s.convoReveal=!s.convoReveal}
 else if(a==="convo-reset"){s.convoReveal=false;s.convoFeedback="נסה שוב בקצב רגוע."}
 else if(a==="convo-next"){s.index=(s.index+1)%list().length;s.convoReveal=false;s.convoFeedback="משפט חדש — נסה לומר אותו לפני ההאזנה."}
-else if(a==="convo-speak"){const p=list()[s.index];if("speechSynthesis"in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(p[1]);u.lang=s.lang==="thai"?"th-TH":"en-US";u.rate=.82;speechSynthesis.speak(u)}else alert("הקראה קולית אינה נתמכת בדפדפן הזה.");return}
+else if(a==="convo-speak"){const p=list()[s.index];if(p&&p[1])speakText(p[1],s.lang);else alert("לא נמצא משפט להשמעה.");return}
 else if(a==="convo-mic"){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){s.convoFeedback="זיהוי דיבור אינו נתמך בדפדפן הזה. אפשר להאזין, לחזור בקול ולחשוף את המשפט כדי לבדוק.";render();return}const rec=new SR();rec.lang=s.lang==="thai"?"th-TH":"en-US";rec.interimResults=false;rec.onresult=ev=>{const said=ev.results[0][0].transcript;const norm=x=>x.toLocaleLowerCase().normalize("NFC").replace(/[\\p{P}\\p{S}]/gu," ").replace(/\\s+/g," ").trim();const target=norm(list()[s.index][1]),heard=norm(said);const score=target===heard?100:(target.includes(heard)||heard.includes(target)?65:0);s.convoFeedback=(score===100?"🟢 הזיהוי תואם למשפט!":score===65?"🟡 זוהה חלק מהמשפט — נסה שוב לאט יותר.":"🔴 הזיהוי שונה מהמשפט המצופה — הקשב שוב ונסה פעם נוספת.")+"<br>המכשיר שמע: "+said+"<br><small>זהו משוב על התאמת הטקסט בלבד, לא מדידה מדויקת של טונים או מבטא.</small>";s.convoReveal=true;render()};rec.onerror=()=>{s.convoFeedback="לא הצלחנו לזהות דיבור הפעם. נסה שוב או השתמש בהשמעה.";render()};rec.start();s.convoFeedback="מקשיב… דבר עכשיו.";render();return}
 else if(a==="test"||a==="words-test"){
  if(a==="words-test")s.contentType="words";else s.contentType="sentences";
@@ -1072,7 +1097,7 @@ else if(a==="test"||a==="words-test"){
  s.cat="__test";s.quizIndex=0;s.quizScore=0;s.quizAnswered=null;s.quizChoice=null
 }
 else if(a==="stats"){s.cat="__stats"}
-else if(a==="speak"){const p=list()[s.index];if("speechSynthesis"in window){const u=new SpeechSynthesisUtterance(p[1]);u.lang=s.lang==="thai"?"th-TH":"en-US";speechSynthesis.speak(u)}else alert("הקראה אינה זמינה במכשיר זה.");return}
+else if(a==="speak"){const p=list()[s.index];if(p&&p[1])speakText(p[1],s.lang);else alert("לא נמצא משפט להשמעה.");return}
 else if(a==="test-answer"){if(s.quizAnswered===s.quizIndex)return;const all=s.quizItems||(s.contentType==="words"?vocabulary.map(w=>s.lang==="thai"?[w[0],w[2],w[3],w[4]]:[w[0],w[1],"",w[4]]):(phrases[s.lang]||[])),p=all[s.quizIndex||0];if(!p)return;const chosen=decodeURIComponent(b.dataset.value),correct=chosen===p[3];s.quizChoice=chosen;s.quizAnswered=s.quizIndex;if(correct)s.quizScore=(s.quizScore||0)+1;render();return}
 else if(a==="test-next"){const all=s.quizItems||(s.contentType==="words"?vocabulary.map(w=>s.lang==="thai"?[w[0],w[2],w[3],w[4]]:[w[0],w[1],"",w[4]]):(phrases[s.lang]||[]));s.quizIndex=(s.quizIndex||0)+1;s.quizAnswered=null;s.quizChoice=null;if(s.quizIndex>=all.length){const scoresKey=s.user+"-"+s.lang+"-testScores";db[scoresKey]??=[];db[scoresKey].push({date:new Date().toISOString().slice(0,10),score:s.quizScore||0,total:all.length});save();s.cat="__stats"}render();return}
 else if(a==="answer"){const p=list()[s.index];const correct=p[3]===decodeURIComponent(b.dataset.value);document.querySelectorAll("[data-action=answer]").forEach(x=>{if(decodeURIComponent(x.dataset.value)===p[3])x.classList.add("correct")});b.classList.add(correct?"correct":"wrong");const f=document.querySelector("#feedback");if(f)f.textContent=correct?"נכון מאוד!":"לא נכון. התשובה הנכונה: "+p[3];return}
