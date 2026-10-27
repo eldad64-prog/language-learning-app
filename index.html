@@ -151,6 +151,38 @@ body{background:linear-gradient(180deg,#e0f4f1 0%,#f7fbfa 42%,#e9f5f3 100%)}
  .languages .lang-card .actions{gap:9px}
 }
 
+
+/* Final responsive repair for language selection cards */
+.languages{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:12px;width:100%;min-width:0}
+.languages>.lang-card{width:100%;min-width:0;max-width:100%;margin:0;overflow:hidden;padding:16px 12px}
+.languages>.lang-card>*{min-width:0;max-width:100%}
+.languages>.lang-card .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;min-width:0}
+.languages>.lang-card .actions[style*="grid-template-columns:1fr"]{grid-template-columns:minmax(0,1fr)!important}
+.languages>.lang-card .btn{display:flex;align-items:center;justify-content:center;width:100%;min-width:0;max-width:100%;margin:0;white-space:normal;overflow-wrap:anywhere;text-align:center}
+.languages>.lang-card .btn,
+.languages>.lang-card .btn.blue,
+.languages>.lang-card .btn.pink,
+.languages>.lang-card .btn.light{
+ color:#fff!important;
+ background:linear-gradient(180deg,#159ba3 0%,#087f8c 100%)!important;
+ border:1px solid rgba(255,255,255,.55)!important;
+ border-radius:16px!important;
+ box-shadow:0 5px 0 #055965,0 8px 12px rgba(0,35,40,.2)!important;
+}
+.languages>.lang-card .btn:active,
+.languages>.lang-card .btn.blue:active,
+.languages>.lang-card .btn.light:active{
+ transform:translateY(4px)!important;
+ box-shadow:0 1px 0 #055965,0 3px 6px rgba(0,35,40,.18)!important;
+}
+@media(max-width:420px){
+ .languages{gap:10px}
+ .languages>.lang-card{padding:14px 9px}
+ .languages>.lang-card .actions{gap:8px}
+ .languages>.lang-card .btn{font-size:14px;padding:10px 5px;min-height:58px}
+ .languages>.lang-card .btn.light{min-height:64px}
+}
+
 </style>
 <title>מסע ללימוד שפות</title>
 <script>
