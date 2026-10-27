@@ -1083,6 +1083,7 @@ function speakText(text,language){
  }catch(err){alert("לא ניתן להפעיל השמעה כרגע. נסה שוב לאחר רענון הדף.");return false}
 }
 document.addEventListener("click",async e=>{const target=e.target&&e.target.nodeType===1?e.target:e.target&&e.target.parentElement;const b=target&&target.closest?target.closest("[data-action]"):null;if(!b||!document.documentElement.contains(b))return;e.preventDefault();const a=b.dataset.action;
+if(a==="next"||a==="prev"){const items=list();if(items.length){s.index=a==="next"?(Number(s.index||0)+1)%items.length:Math.max(0,Number(s.index||0)-1);s.revealed=false;s.lessonMode="learn";render()}return}
 if(a==="refresh-app"){if(s.refreshing)return;s.refreshing=true;b.disabled=true;b.setAttribute("aria-busy","true");b.innerHTML="⏳";const stamp=Date.now().toString();const url=new URL(location.href);url.searchParams.set("v",stamp);url.searchParams.set("refresh",stamp);url.hash="";try{if("serviceWorker"in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}}catch(err){}try{if("caches"in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)))}}catch(err){}location.href=url.href;return}
 if(a==="user-eldad"||a==="user-liora"){
  if(a==="user-eldad"&&!(await verifyEldad()))return;
