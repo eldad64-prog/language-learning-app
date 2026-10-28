@@ -1233,15 +1233,26 @@ function playThaiAudio(value){
   "https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=th&q="+encodeURIComponent(text),
   "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q="+encodeURIComponent(text)
  ];
- let index=0,audio=null,finished=false;
+ let index=0,finished=false;
  const tryNext=()=>{
   if(finished)return;
   if(index>=urls.length){finished=true;speakThaiLocalFallback(text);return}
-  audio=new Audio();audio.preload="auto";
-  audio.onerror=()=>{index++;tryNext()};
-  audio.onended=()=>{finished=true};
+  const audio=new Audio();audio.preload="auto";
+  let settled=false;
+  const fail=()=>{
+   if(settled||finished)return;
+   settled=true;
+   index++;
+   tryNext();
+  };
+  audio.onerror=fail;
+  audio.onended=()=>{settled=true;finished=true};
+  audio.onplaying=()=>{settled=true};
   audio.src=urls[index++];
-  const p=audio.play();if(p&&typeof p.catch==="function")p.catch(()=>{if(!finished){index++;tryNext()}});
+  try{
+   const p=audio.play();
+   if(p&&typeof p.catch==="function")p.catch(fail);
+  }catch(err){fail()}
  };
  try{tryNext();return true}catch(err){return speakThaiLocalFallback(text)}
 }
