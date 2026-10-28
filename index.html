@@ -1113,7 +1113,7 @@ async function thaiRomanization(text){
  return "";
 }
 function thaiToHebrew(text){
- const exact={"sa-wat-dee":"סַוַאט־דִי","sawatdee":"סַוַאט־דִי","sa-wat-dee khrap":"סַוַאט־דִי קְרַאפ","sawatdee khrap":"סַוַאט־דִי קְרַאפ","sa-wat-dee khráp":"סַוַאט־דִי קְרַאפ","khop khun":"קוֹפּ־קוּן","khop khun khrap":"קוֹפּ־קוּן קְרַאפ","khop khun kha":"קוֹפּ־קוּן קָה","ka-ru-na":"קַה־רוּ־נַא","kho thot":"קוֹ־טוֹט","la-khon":"לַה־קוֹן","la-khon khrap":"לַה־קוֹן קְרַאפ","mai pen rai":"מַאי פֶּן רַאי","chai":"צ׳ַאי","mai":"מַאי","khun":"קוּן","khrap":"קְרַאפ","khráp":"קְרַאפ","kha":"קָה","ka":"קַה","sabai-dee":"סַבַּאי־דִי","sabaai-dee":"סַבַּאי־דִי","aroi":"אַ־רוֹי","nam":"נַאם","thao rai":"טַאו־רַאי","tao rai":"טַאו־רַאי","hong nam":"הוֹנג־נַאם","hong":"הוֹנג","nam plao":"נַאם־פְּלַאו","mai ao":"מַאי־אַו","ao":"אַו","bpai":"בַּאי","pai":"פַּאי","dee":"דִי","dii":"דִי","khawp khun":"קוֹפּ־קוּן","khun krap":"קוּן קְרַאפ","sawat dee":"סַוַאט־דִי","chook-dii":"צ׳וּק־דִי","chook":"צ׳וּק"};
+ const exact={"sa-wat-dee":"סַוַאט־דִי","sawatdee":"סַוַאט־דִי","sa-wat-dee khrap":"סַוַאט־דִי קְרַאפ","sawatdee khrap":"סַוַאט־דִי קְרַאפ","sa-wat-dee khráp":"סַוַאט־דִי קְרַאפ","khop khun":"קוֹפּ־קוּן","khop khun khrap":"קוֹפּ־קוּן קְרַאפ","khop khun kha":"קוֹפּ־קוּן קָה","ka-ru-na":"קַה־רוּ־נַא","kho thot":"קוֹ־טוֹט","la-khon":"לַה־קוֹן","la-khon khrap":"לַה־קוֹן קְרַאפ","mai pen rai":"מַאי פֶּן רַאי","chai":"צ׳ַאי","mai":"מַאי","khun":"קוּן","khrap":"קְרַאפ","khráp":"קְרַאפ","kha":"קָה","ka":"קַה","sabai-dee":"סַבַּאי־דִי","sabaai-dee":"סַבַּאי־דִי","aroi":"אַ־רוֹי","nam":"נַאם","thao rai":"טַאו־רַאי","tao rai":"טַאו־רַאי","hong nam":"הוֹנג־נַאם","hong":"הוֹנג","nam plao":"נַאם־פְּלַאו","mai ao":"מַאי־אַו","ao":"אַו","bpai":"בַּאי","pai":"פַּאי","dee":"דִי","dii":"דִי","khawp khun":"קוֹפּ־קוּן","khun krap":"קוּן קְרַאפ","sawat dee":"סַוַאט־דִי","a-run-sa-wat":"אַ־רוּן סַ־וַאט","arun sawat":"אַ־רוּן סַ־וַאט","chook-dii":"צ׳וּק־דִי","chook":"צ׳וּק"};
  const k=String(text||"").trim().toLowerCase().replace(/\s+/g," ");
  return exact[k]||"";
 }
@@ -1174,7 +1174,9 @@ async function verifyEldad(){
 function speakText(text,language){
  const value=String(text||"").trim();
  if(!value){alert("אין טקסט להשמעה.");return false}
- if(!("speechSynthesis" in window)||typeof SpeechSynthesisUtterance==="undefined"){if(language==="thai")return playThaiAudio(value);alert("הקראה קולית אינה זמינה בדפדפן הזה. נסה לפתוח את האפליקציה ב-Chrome.");return false}
+ /* Thai must be spoken from the Thai script, not from its romanization. Prefer the Thai TTS audio service so an installed device voice cannot silently use a different accent/reading. */
+ if(language==="thai")return playThaiAudio(value);
+ if(!("speechSynthesis" in window)||typeof SpeechSynthesisUtterance==="undefined"){alert("הקראה קולית אינה זמינה בדפדפן הזה. נסה לפתוח את האפליקציה ב-Chrome.");return false}
  try{
   const engine=window.speechSynthesis;engine.cancel();
   const voices=engine.getVoices();
