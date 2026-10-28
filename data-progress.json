@@ -95,7 +95,9 @@
       "user_progress_storage_schema_changed": false,
       "visual_design_changed": false,
       "data_arrays_recounted": true,
-      "romanization_note": "Learner-oriented romanization was checked for field completeness and plausibility; independent native-speaker phonetic review was not performed in this run."
+      "romanization_note": "Learner-oriented romanization was checked for field completeness and plausibility; independent native-speaker phonetic review was not performed in this run.",
+      "duplicate_translations_found_and_corrected": 2,
+      "final_batch_duplicate_check": "No duplicate English terms, Thai terms, or source phrases remain in the new batch after correcting two Thai vocabulary collisions."
     }
   },
   "remaining_by_category": {
