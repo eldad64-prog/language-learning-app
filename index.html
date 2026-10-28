@@ -1191,26 +1191,32 @@ function speakText(text,language){
 }
 function speakThaiLocalFallback(value){
  try{
-  if(!("speechSynthesis" in window)||typeof SpeechSynthesisUtterance==="undefined"){alert("שירות השמע החיצוני לא זמין וגם אין במכשיר מנוע הקראה. בדוק אינטרנט או התקן קול תאילנדי בהגדרות הטקסט-לדיבור.");return false}
+  if(!("speechSynthesis" in window)||typeof SpeechSynthesisUtterance==="undefined"){alert("השמע המקוון לא זמין. בדוק חיבור לאינטרנט ונסה שוב.");return false}
   const engine=window.speechSynthesis;engine.cancel();
-  const u=new SpeechSynthesisUtterance(String(value||"").trim());u.lang="th-TH";u.rate=.78;u.volume=1;
-  const voice=engine.getVoices().find(v=>String(v.lang||"").toLowerCase().startsWith("th"));
-  if(voice)u.voice=voice;
-  u.onerror=()=>alert("לא ניתן להשמיע תאית כרגע. בדוק חיבור לאינטרנט או התקן קול תאילנדי בהגדרות הטלפון.");
+  const voice=engine.getVoices().find(v=>String(v.lang||"").toLowerCase()==="th-th")||engine.getVoices().find(v=>String(v.lang||"").toLowerCase().startsWith("th-"));
+  if(!voice){alert("השמע המקוון לא זמין ואין בטלפון קול תאילנדי מותקן. אין להשמיע בקול שגוי. בדוק חיבור לאינטרנט או התקן קול תאילנדי בהגדרות הטקסט-לדיבור.");return false}
+  const u=new SpeechSynthesisUtterance(String(value||"").trim());u.lang=voice.lang||"th-TH";u.voice=voice;u.rate=.78;u.volume=1;
+  u.onerror=()=>alert("לא ניתן להשמיע תאית כרגע. בדוק חיבור לאינטרנט ונסה שוב.");
   engine.speak(u);return true;
  }catch(err){alert("לא ניתן להפעיל הגייה קולית כרגע.");return false}
 }
 function playThaiAudio(value){
  const text=String(value||"").trim();if(!text){alert("אין טקסט תאילנדי להשמעה.");return false}
- try{
-  const audioUrl="https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q="+encodeURIComponent(text);
-  const audio=new Audio(audioUrl);audio.preload="auto";
-  let fallbackUsed=false;
-  const fallback=()=>{if(fallbackUsed)return;fallbackUsed=true;speakThaiLocalFallback(text)};
-  audio.onerror=fallback;
-  const result=audio.play();if(result&&typeof result.catch==="function")result.catch(fallback);
-  return true;
- }catch(err){return speakThaiLocalFallback(text)}
+ const urls=[
+  "https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=th&q="+encodeURIComponent(text),
+  "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q="+encodeURIComponent(text)
+ ];
+ let index=0,audio=null,finished=false;
+ const tryNext=()=>{
+  if(finished)return;
+  if(index>=urls.length){finished=true;speakThaiLocalFallback(text);return}
+  audio=new Audio();audio.preload="auto";
+  audio.onerror=()=>{index++;tryNext()};
+  audio.onended=()=>{finished=true};
+  audio.src=urls[index++];
+  const p=audio.play();if(p&&typeof p.catch==="function")p.catch(()=>{if(!finished){index++;tryNext()}});
+ };
+ try{tryNext();return true}catch(err){return speakThaiLocalFallback(text)}
 }
 document.addEventListener("click",async e=>{const target=e.target&&e.target.nodeType===1?e.target:e.target&&e.target.parentElement;const b=target&&target.closest?target.closest("[data-action]"):null;if(!b||!document.documentElement.contains(b))return;e.preventDefault();const a=b.dataset.action;
 if(a==="next"||a==="prev"){const items=list();if(items.length){s.index=a==="next"?(Number(s.index||0)+1)%items.length:(Number(s.index||0)-1+items.length)%items.length;s.revealed=false;s.lessonMode="learn";render()}return}
