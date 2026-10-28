@@ -1201,20 +1201,20 @@ async function verifyEldad(){
 function speakText(text,language){
  const value=String(text||"").trim();
  if(!value){alert("אין טקסט להשמעה.");return false}
- /* Thai must be spoken from the Thai script, not from its romanization. Prefer the Thai TTS audio service so an installed device voice cannot silently use a different accent/reading. */
- if(language==="thai")return playThaiAudio(value);
  if(!("speechSynthesis" in window)||typeof SpeechSynthesisUtterance==="undefined"){alert("הקראה קולית אינה זמינה בדפדפן הזה. נסה לפתוח את האפליקציה ב-Chrome.");return false}
  try{
   const engine=window.speechSynthesis;engine.cancel();
   const voices=engine.getVoices();
-  const prefix=language==="thai"?"th":"en";const expected=language==="thai"?"th-TH":"en-US";
+  const thai=language==="thai";
+  const expected=thai?"th-TH":"en-US";
+  const prefix=thai?"th":"en";
   const matching=voices.find(v=>String(v.lang||"").toLowerCase()===expected.toLowerCase())||voices.find(v=>String(v.lang||"").toLowerCase().startsWith(prefix+"-"));
-  if(language==="thai"&&!matching)return playThaiAudio(value);
-  const utterance=new SpeechSynthesisUtterance(value);utterance.lang=expected;utterance.rate=language==="thai"?.78:.84;utterance.volume=1;utterance.pitch=1;
+  const utterance=new SpeechSynthesisUtterance(value);
+  utterance.lang=expected;utterance.rate=thai?.78:.84;utterance.volume=1;utterance.pitch=1;
   if(matching)utterance.voice=matching;
-  utterance.onerror=()=>{if(language==="thai")playThaiAudio(value);else alert("המכשיר לא הצליח להשמיע את המשפט. בדוק את עוצמת המדיה ואת הקול האנגלי.")};
+  utterance.onerror=()=>{if(thai)alert("הדפדפן לא הצליח להשמיע תאית. בדוק שבהגדרות הטקסט-לדיבור בטלפון מותקן קול תאילנדי.");else alert("המכשיר לא הצליח להשמיע את המשפט. בדוק את עוצמת המדיה ואת הקול האנגלי.")};
   engine.speak(utterance);return true;
- }catch(err){if(language==="thai")return playThaiAudio(value);alert("לא ניתן להפעיל השמעה כרגע. נסה שוב לאחר רענון הדף.");return false}
+ }catch(err){alert("לא ניתן להפעיל הגייה קולית כרגע. נסה לרענן את הדף.");return false}
 }
 function speakThaiLocalFallback(value){
  try{
