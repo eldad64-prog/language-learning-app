@@ -1,53 +1,53 @@
 {
-  "updated_at": "2026-10-28",
+  "updated_at": "2026-10-29",
   "target_per_category": {
     "paired_vocabulary_items": 1000,
     "phrases_per_language": 100
   },
-  "note": "Counts are recalculated from the data arrays in index.html, unique within each category. Vocabulary entries contain English, Thai, learner-oriented Thai romanization and Hebrew meaning. English phrase rows use a blank romanization field. Legacy same-source phrases found across different categories are retained to avoid changing category-specific progress identifiers; no new duplicates were added in this batch.",
+  "note": "Counts are recalculated from the current data arrays in index.html and count unique source terms within each category. Vocabulary entries include English, Thai, learner-oriented Thai romanization and Hebrew meaning. Thai phrases include Thai text, romanization and Hebrew meaning; English phrases include English text and Hebrew meaning. This batch adds 5 vocabulary items, 3 Thai phrases and 3 English phrases per category. Legacy cross-category overlaps are preserved to avoid changing existing learning identifiers. No user progress storage schema or visual design changes were made. Romanization was checked for field completeness and consistency; independent native-speaker review was not performed.",
   "completed": {
-    "paired_vocabulary_items": 380,
+    "paired_vocabulary_items": 430,
     "vocabulary_by_category": {
-      "greetings": 40,
-      "food": 40,
-      "transport": 37,
-      "shopping": 37,
-      "hotel": 37,
-      "directions": 38,
-      "health": 37,
-      "money": 37,
-      "social": 38,
-      "work": 39
+      "greetings": 45,
+      "food": 45,
+      "transport": 42,
+      "shopping": 42,
+      "hotel": 42,
+      "directions": 43,
+      "health": 42,
+      "money": 42,
+      "social": 43,
+      "work": 44
     },
-    "thai_phrases": 245,
+    "thai_phrases": 275,
     "thai_phrases_by_category": {
-      "greetings": 29,
-      "food": 27,
+      "greetings": 32,
+      "food": 30,
+      "transport": 28,
+      "shopping": 27,
+      "hotel": 27,
+      "directions": 26,
+      "health": 26,
+      "money": 26,
+      "social": 27,
+      "work": 26
+    },
+    "english_phrases": 245,
+    "english_phrases_by_category": {
+      "greetings": 26,
+      "food": 26,
       "transport": 25,
       "shopping": 24,
       "hotel": 24,
-      "directions": 23,
-      "health": 23,
-      "money": 23,
+      "directions": 24,
+      "health": 24,
+      "money": 24,
       "social": 24,
-      "work": 23
-    },
-    "english_phrases": 215,
-    "english_phrases_by_category": {
-      "greetings": 23,
-      "food": 23,
-      "transport": 22,
-      "shopping": 21,
-      "hotel": 21,
-      "directions": 21,
-      "health": 21,
-      "money": 21,
-      "social": 21,
-      "work": 21
+      "work": 24
     }
   },
   "this_batch": {
-    "batch_id": "2026-10-28-04",
+    "batch_id": "2026-10-29-05",
     "paired_vocabulary_items_added": 50,
     "thai_phrases_added": 30,
     "english_phrases_added": 30,
@@ -95,47 +95,45 @@
       "user_progress_storage_schema_changed": false,
       "visual_design_changed": false,
       "data_arrays_recounted": true,
-      "romanization_note": "Learner-oriented romanization was checked for field completeness and plausibility; independent native-speaker phonetic review was not performed in this run.",
-      "duplicate_translations_found_and_corrected": 2,
-      "final_batch_duplicate_check": "No duplicate English terms, Thai terms, or source phrases remain in the new batch after correcting two Thai vocabulary collisions."
+      "romanization_note": "Learner-oriented romanization was checked for completeness and consistency; independent native-speaker phonetic review was not performed in this run."
     }
   },
   "remaining_by_category": {
     "paired_vocabulary_items": {
-      "greetings": 960,
-      "food": 960,
-      "transport": 963,
-      "shopping": 963,
-      "hotel": 963,
-      "directions": 962,
-      "health": 963,
-      "money": 963,
-      "social": 962,
-      "work": 961
+      "greetings": 955,
+      "food": 955,
+      "transport": 958,
+      "shopping": 958,
+      "hotel": 958,
+      "directions": 957,
+      "health": 958,
+      "money": 958,
+      "social": 957,
+      "work": 956
     },
     "thai_phrases": {
-      "greetings": 71,
-      "food": 73,
+      "greetings": 68,
+      "food": 70,
+      "transport": 72,
+      "shopping": 73,
+      "hotel": 73,
+      "directions": 74,
+      "health": 74,
+      "money": 74,
+      "social": 73,
+      "work": 74
+    },
+    "english_phrases": {
+      "greetings": 74,
+      "food": 74,
       "transport": 75,
       "shopping": 76,
       "hotel": 76,
-      "directions": 77,
-      "health": 77,
-      "money": 77,
+      "directions": 76,
+      "health": 76,
+      "money": 76,
       "social": 76,
-      "work": 77
-    },
-    "english_phrases": {
-      "greetings": 77,
-      "food": 77,
-      "transport": 78,
-      "shopping": 79,
-      "hotel": 79,
-      "directions": 79,
-      "health": 79,
-      "money": 79,
-      "social": 79,
-      "work": 79
+      "work": 76
     }
   },
   "batch_history": [
@@ -191,6 +189,58 @@
         "user_progress_storage_schema_changed": false,
         "visual_design_changed": false,
         "data_arrays_recounted": true
+      }
+    },
+    {
+      "batch_id": "2026-10-29-05",
+      "paired_vocabulary_items_added": 50,
+      "thai_phrases_added": 30,
+      "english_phrases_added": 30,
+      "vocabulary_added_by_category": {
+        "greetings": 5,
+        "food": 5,
+        "transport": 5,
+        "shopping": 5,
+        "hotel": 5,
+        "directions": 5,
+        "health": 5,
+        "money": 5,
+        "social": 5,
+        "work": 5
+      },
+      "thai_phrases_added_by_category": {
+        "greetings": 3,
+        "food": 3,
+        "transport": 3,
+        "shopping": 3,
+        "hotel": 3,
+        "directions": 3,
+        "health": 3,
+        "money": 3,
+        "social": 3,
+        "work": 3
+      },
+      "english_phrases_added_by_category": {
+        "greetings": 3,
+        "food": 3,
+        "transport": 3,
+        "shopping": 3,
+        "hotel": 3,
+        "directions": 3,
+        "health": 3,
+        "money": 3,
+        "social": 3,
+        "work": 3
+      },
+      "duplicates_detected_in_new_batch": 0,
+      "validation": {
+        "required_fields_checked": true,
+        "exact_duplicates_checked_against_existing_data": true,
+        "new_batch_duplicates_detected": 0,
+        "user_progress_storage_schema_changed": false,
+        "visual_design_changed": false,
+        "data_arrays_recounted": true,
+        "romanization_note": "Learner-oriented romanization was checked for completeness and consistency; independent native-speaker phonetic review was not performed in this run."
       }
     }
   ]
