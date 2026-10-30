@@ -205,16 +205,60 @@ create policy "custom_items_owner_all" on public.custom_items
   for all to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
 
 drop policy if exists "recordings_owner_all" on public.recordings;
-create policy "recordings_owner_all" on public.recordings
-  for all to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+create policy "recordings_owner_select" on public.recordings
+  for select to authenticated using (user_id = (select auth.uid()));
+drop policy if exists "recordings_owner_insert" on public.recordings;
+create policy "recordings_owner_insert" on public.recordings
+  for insert to authenticated with check (
+    user_id = (select auth.uid())
+    and (item_id is null or exists (
+      select 1 from public.learning_items li where li.id = item_id and li.is_active = true
+    ))
+    and (custom_item_id is null or exists (
+      select 1 from public.custom_items ci where ci.id = custom_item_id and ci.user_id = (select auth.uid())
+    ))
+  );
+drop policy if exists "recordings_owner_update" on public.recordings;
+create policy "recordings_owner_update" on public.recordings
+  for update to authenticated using (user_id = (select auth.uid()))
+  with check (
+    user_id = (select auth.uid())
+    and (item_id is null or exists (
+      select 1 from public.learning_items li where li.id = item_id and li.is_active = true
+    ))
+    and (custom_item_id is null or exists (
+      select 1 from public.custom_items ci where ci.id = custom_item_id and ci.user_id = (select auth.uid())
+    ))
+  );
+drop policy if exists "recordings_owner_delete" on public.recordings;
+create policy "recordings_owner_delete" on public.recordings
+  for delete to authenticated using (user_id = (select auth.uid()));
 
 drop policy if exists "test_attempts_owner_all" on public.test_attempts;
 create policy "test_attempts_owner_all" on public.test_attempts
   for all to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
 
 drop policy if exists "test_answers_owner_all" on public.test_answers;
-create policy "test_answers_owner_all" on public.test_answers
-  for all to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+create policy "test_answers_owner_select" on public.test_answers
+  for select to authenticated using (user_id = (select auth.uid()));
+drop policy if exists "test_answers_owner_insert" on public.test_answers;
+create policy "test_answers_owner_insert" on public.test_answers
+  for insert to authenticated with check (
+    user_id = (select auth.uid())
+    and exists (
+      select 1 from public.test_attempts ta
+      where ta.id = attempt_id and ta.user_id = (select auth.uid())
+    )
+    and (item_id is null or exists (
+      select 1 from public.learning_items li where li.id = item_id
+    ))
+    and (custom_item_id is null or exists (
+      select 1 from public.custom_items ci where ci.id = custom_item_id and ci.user_id = (select auth.uid())
+    ))
+  );
+drop policy if exists "test_answers_owner_delete" on public.test_answers;
+create policy "test_answers_owner_delete" on public.test_answers
+  for delete to authenticated using (user_id = (select auth.uid()));
 
 drop policy if exists "user_settings_owner_all" on public.user_settings;
 create policy "user_settings_owner_all" on public.user_settings
