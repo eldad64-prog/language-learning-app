@@ -209,6 +209,14 @@ for delete to authenticated
 using (bucket_id = 'pronunciation-recordings'
   and (storage.foldername(name))[1] = (select auth.uid())::text);
 
+-- Explicit API privileges. RLS remains the row-level security boundary.
+grant usage on schema public to authenticated;
+grant select, update on public.profiles to authenticated;
+grant select, insert, update, delete on public.learning_items to authenticated;
+grant select, insert, update, delete on public.learning_progress to authenticated;
+grant select, insert, update, delete on public.test_attempts to authenticated;
+grant select, insert, update, delete on public.pronunciation_recordings to authenticated;
+
 -- Notes:
 -- 1) Do not expose service_role or database passwords in the app.
 -- 2) Use the anon/publishable key only together with the RLS policies above.
