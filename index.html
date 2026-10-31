@@ -1664,5 +1664,10 @@ render();
 if("serviceWorker"in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).catch(()=>{});
 
 </script>
+
+<!-- Optional cloud sync: inactive until supabase-config.js contains project URL + anon key -->
+<script src="./supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase-sync.js"></script>
 </body>
 </html>
