@@ -5,5 +5,5 @@
 */
 window.LANGUAGE_APP_SUPABASE = {
   url: "PASTE_SUPABASE_PROJECT_URL_HERE",
-  anonKey: "PASTE_SUPABASE_ANON_PUBLIC_KEY_HERE"
+  anonKey: "sb_publishable_gAEmxJmMZPI8Yv_BaXfUpg_MfPxWo4B"
 };
