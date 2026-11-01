@@ -57,7 +57,8 @@ Deno.serve(async (req) => {
     }
     const { data, error } = await admin.from("profiles").update({ approval_status: status, updated_at: new Date().toISOString() }).eq("id", id).select("id,approval_status").single();
     if (error) return json({ error: error.message }, 400, requestOrigin);
-    await admin.from("admin_audit_log").insert({ actor_id: user.id, action: `user_${status}`, target_user_id: id });
+    const { error: auditError } = await admin.from("admin_audit_log").insert({ actor_id: user.id, action: `user_${status}`, target_user_id: id });
+    if (auditError) console.error("Audit log write failed:", auditError.message);
     return json({ profile: data }, 200, requestOrigin);
   }
   if (action === "save_content") {
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
         !["word", "sentence"].includes(String(item.item_type)) ||
         typeof item.source_text !== "string" || !item.source_text.trim() ||
         typeof item.translation_text !== "string" || !item.translation_text.trim()) {
-      return json({ error: "Invalid content item" }, 400);
+      return json({ error: "Invalid content item" }, 400, requestOrigin);
     }
     const safe = {
       learning_language: item.learning_language, translation_language: item.translation_language,
@@ -82,16 +83,18 @@ Deno.serve(async (req) => {
     const result = id
       ? await admin.from("content_items").update(safe).eq("id", id).select().single()
       : await admin.from("content_items").insert({ ...safe, created_by: user.id }).select().single();
-    if (result.error) return json({ error: result.error.message }, 400);
-    await admin.from("admin_audit_log").insert({ actor_id: user.id, action: id ? "content_updated" : "content_created", details: { content_id: result.data.id } });
+    if (result.error) return json({ error: result.error.message }, 400, requestOrigin);
+    const { error: auditError } = await admin.from("admin_audit_log").insert({ actor_id: user.id, action: id ? "content_updated" : "content_created", details: { content_id: result.data.id } });
+    if (auditError) console.error("Audit log write failed:", auditError.message);
     return json({ item: result.data }, 200, requestOrigin);
   }
   if (action === "publish_content") {
     const ids = Array.isArray(body.ids) ? body.ids.filter((x): x is string => typeof x === "string").slice(0, 500) : [];
-    if (!ids.length) return json({ error: "Select at least one item" }, 400);
+    if (!ids.length) return json({ error: "Select at least one item" }, 400, requestOrigin);
     const { data, error } = await admin.from("content_items").update({ status: "published", published_at: new Date().toISOString(), updated_by: user.id }).in("id", ids).eq("status", "draft").select("id,status");
     if (error) return json({ error: error.message }, 400, requestOrigin);
-    await admin.from("admin_audit_log").insert({ actor_id: user.id, action: "content_published", details: { count: data.length } });
+    const { error: auditError } = await admin.from("admin_audit_log").insert({ actor_id: user.id, action: "content_published", details: { count: data.length } });
+    if (auditError) console.error("Audit log write failed:", auditError.message);
     return json({ published: data.length }, 200, requestOrigin);
   }
   if (action === "dashboard_stats") {
