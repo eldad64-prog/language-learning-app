@@ -12,7 +12,8 @@ test("learner UI exposes language settings and private achievements", () => {
   assert.match(html, /id="learnerLearning"/);
   assert.match(html, /id="learnerTranslation"/);
   assert.match(html, /id="saveLanguagePair"/);
-  assert.match(html, /id="achievementsList"/);\n  assert.match(app, /data-edit-draft/);
+  assert.match(html, /id="achievementsList"/);
+  assert.match(app, /data-edit-draft/);
 });
 
 test("learner app saves preferences, progress, quizzes and achievement sync", () => {
