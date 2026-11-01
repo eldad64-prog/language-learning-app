@@ -15,4 +15,4 @@ Set APP_ORIGIN to the exact HTTPS origin serving V2 (scheme and hostname, no tra
 
 ## Incremental achievements migration
 
-After applying the main schema, apply `supabase-achievements-migration.sql` to add the private achievements table. It grants authenticated users read access only to their own achievements (and the owner administrator can read all); clients cannot award achievements. Awarding achievements must be performed by a trusted server-side function.
+After applying the main schema, apply `supabase-achievements-migration.sql` and `supabase-rate-limits-migration.sql` if those objects are not already present. The Edge Function evaluates and awards learner achievements from server-verified progress and test records; the browser cannot grant itself achievements. Persistent database-backed limits are set to 20 achievement sync requests and 60 admin actions per user per minute. The rate-limit RPC is executable only by `service_role`.
