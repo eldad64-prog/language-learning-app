@@ -170,6 +170,8 @@ create policy "users insert own events" on public.learning_events for insert to 
 with check (user_id = (select auth.uid()) and (select public.is_approved_user()));
 create policy "owner admin read audit log" on public.admin_audit_log for select to authenticated
 using ((select public.is_owner_admin()));
+create policy "owner admin read all progress" on public.user_progress for select to authenticated
+using ((select public.is_owner_admin()));
 
 -- IMPORTANT operational steps (trusted SQL editor / server-side only):
 -- 1) Create the first owner account through Supabase Auth signup.
