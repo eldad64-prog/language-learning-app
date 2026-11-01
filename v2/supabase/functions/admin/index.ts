@@ -38,12 +38,23 @@ Deno.serve(async (req) => {
   if (authError || !user) return json({ error: "Invalid session" }, 401, requestOrigin);
 
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const enforceRateLimit = async (action: "admin" | "sync_achievements", limit: number) => {
+    const { data, error } = await admin.rpc("consume_api_rate_limit", {
+      p_user_id: user.id, p_action: action, p_limit: limit, p_window_seconds: 60,
+    });
+    if (error) {
+      console.error("Rate limit check failed:", error.message);
+      return false;
+    }
+    return data === true;
+  };
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400, requestOrigin); }
 
   // Learners may request achievement evaluation for their own approved account only.
   // All counters are recomputed server-side; client-supplied progress is never trusted.
   if (body.action === "sync_achievements") {
+    if (!await enforceRateLimit("sync_achievements", 20)) return json({ error: "Too many requests. Please wait one minute." }, 429, requestOrigin);
     const { data: profile, error: profileError } = await admin.from("profiles")
       .select("approval_status").eq("id", user.id).maybeSingle();
     if (profileError || profile?.approval_status !== "approved") {
@@ -83,6 +94,7 @@ Deno.serve(async (req) => {
   }
 
   if (user.app_metadata?.role !== "owner_admin") return json({ error: "Owner administrator only" }, 403, requestOrigin);
+  if (!await enforceRateLimit("admin", 60)) return json({ error: "Too many requests. Please wait one minute." }, 429, requestOrigin);
   const action = body.action;
 
   if (action === "list_users") {
