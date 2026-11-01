@@ -44,9 +44,23 @@ Deno.serve(async (req) => {
   const action = body.action;
 
   if (action === "list_users") {
-    const { data: profiles, error } = await admin.from("profiles").select("*").order("created_at", { ascending: false }).limit(500);
+    const { data: profiles, error } = await admin.from("profiles").select("id,display_name,learning_language,translation_language,approval_status,created_at").order("created_at", { ascending: false }).limit(500);
     if (error) return json({ error: error.message }, 400, requestOrigin);
-    return json({ profiles }, 200, requestOrigin);
+    const ids = (profiles ?? []).map((p) => p.id);
+    if (!ids.length) return json({ profiles: [] }, 200, requestOrigin);
+    const [events, progress, tests] = await Promise.all([
+      admin.from("learning_events").select("user_id,event_type,duration_seconds,created_at").in("user_id", ids).order("created_at", { ascending: false }).limit(10000),
+      admin.from("user_progress").select("user_id,mastery").in("user_id", ids).limit(20000),
+      admin.from("test_results").select("user_id,score,completed_at").in("user_id", ids).order("completed_at", { ascending: false }).limit(10000),
+    ]);
+    if (events.error || progress.error || tests.error) return json({ error: "Unable to load user activity metrics" }, 400, requestOrigin);
+    const metrics = new Map<string, {lastActive:string|null,lastLogin:string|null,seconds:number,learned:number,scores:number[],tests:number}>();
+    for (const id of ids) metrics.set(id,{lastActive:null,lastLogin:null,seconds:0,learned:0,scores:[],tests:0});
+    for (const x of events.data ?? []) { const m=metrics.get(x.user_id); if(!m)continue; if(!m.lastActive)m.lastActive=x.created_at; if(x.event_type==="login"&&!m.lastLogin)m.lastLogin=x.created_at; m.seconds+=Number(x.duration_seconds??0); }
+    for (const x of progress.data ?? []) { const m=metrics.get(x.user_id); if(m && Number(x.mastery)>=3)m.learned++; }
+    for (const x of tests.data ?? []) { const m=metrics.get(x.user_id); if(m){m.tests++; if(m.scores.length<100)m.scores.push(Number(x.score));} }
+    const enriched=(profiles??[]).map(p=>{const m=metrics.get(p.id)!;return {...p,last_active:m.lastActive,last_login:m.lastLogin,learned_count:m.learned,study_minutes:Math.round(m.seconds/60),test_count:m.tests,average_test_score:m.scores.length?Math.round(m.scores.reduce((a,b)=>a+b,0)/m.scores.length):null};});
+    return json({ profiles: enriched }, 200, requestOrigin);
   }
   if (action === "set_approval") {
     const id = typeof body.user_id === "string" ? body.user_id : "";
