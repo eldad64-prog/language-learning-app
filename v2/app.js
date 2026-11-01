@@ -45,8 +45,9 @@ async function enterLearner(){
  if(error||!profile||profile.approval_status!=='approved'){toast('החשבון אינו מאושר ללמידה.');return}
  learnerProfile=profile;learning=profile.learning_language;translation=profile.translation_language;$('#learnerLearning').value=learning;$('#learnerTranslation').value=translation;
  $('#learnerPair').textContent=(languageNames[learning]||learning)+' ← '+(languageNames[translation]||translation);
- setView('learner');await refreshLearnerStats();lastDurationFlush=Date.now();await logEvent('login',{client:'web'});
+ setView('learner');await refreshLearnerStats();await loadAchievements();lastDurationFlush=Date.now();await logEvent('login',{client:'web'});
 }
+async function loadAchievements(){const root=$('#achievementsList');if(!root||!currentUser)return;try{const {data,error}=await supabaseClient.from('user_achievements').select('achievement_key,title,description,awarded_at').eq('user_id',currentUser.id).order('awarded_at',{ascending:false}).limit(100);if(error)throw error;root.innerHTML=data?.length?'<ul>'+data.map(x=>'<li><b>'+escapeHtml(x.title)+'</b> — '+escapeHtml(x.description||'')+'</li>').join('')+'</ul>':'עדיין אין הישגים. הם יתווספו ככל שתתקדם בלמידה.'}catch(e){root.textContent='לא ניתן לטעון הישגים: '+e.message}}
 async function refreshLearnerStats(){
  if(!currentUser)return;
  const [progress,tests]=await Promise.all([
