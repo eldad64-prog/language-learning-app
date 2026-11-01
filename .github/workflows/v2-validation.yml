@@ -1,0 +1,46 @@
+name: V2 validation
+on:
+  push:
+    branches: [v2-platform-development]
+    paths:
+      - "v2/**"
+      - ".github/workflows/v2-validation.yml"
+  pull_request:
+    branches: [v2-platform-development]
+    paths:
+      - "v2/**"
+      - ".github/workflows/v2-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check JavaScript syntax
+        run: |
+          node --check v2/app.js
+          node --check v2/supabase-config.js
+          node --check v2/sw.js
+      - name: Verify browser bundle contains no server secrets
+        run: |
+          if grep -R -n -E 'service_role|sb_secret|SUPABASE_SERVICE_ROLE_KEY' v2 --include='*.js' --include='*.html'; then
+            echo "Server-side secret material must never appear in browser files."
+            exit 1
+          fi
+      - name: Verify required V2 files
+        run: |
+          test -s v2/index.html
+          test -s v2/app.css
+          test -s v2/app.js
+          test -s v2/supabase-schema.sql
+          test -s v2/supabase/functions/admin/index.ts
+          test -s v2/supabase-achievements-migration.sql
