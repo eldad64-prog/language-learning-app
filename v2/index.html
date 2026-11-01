@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#101b2b"><title>Lingua — לומדים שפה בדרך שלך</title>
+<meta name="theme-color" content="#101b2b"><meta name="description" content="לימוד עברית, אנגלית ותאית עם התקדמות אישית"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml"><title>Lingua — לומדים שפה בדרך שלך</title>
 <link rel="stylesheet" href="./app.css">
 </head>
 <body>
@@ -22,5 +22,5 @@
 </section>
 <section class="bottom-note"><span>✦</span><div><b>ההתקדמות שלך. הפרטיות שלך.</b><p>כל משתמש רואה רק את הנתונים האישיים שלו. נתוני ניהול יהיו נגישים למנהל המערכת בלבד.</p></div></section>
 </main><footer><span>LINGUA V2</span><span>נבנה ללמידה מתמשכת · <a href="./README.md">מידע על הפרויקט</a></span></footer>
-<div class="toast" id="toast" role="status" aria-live="polite"></div><script src="./app.js"></script>
+<div class="toast" id="toast" role="status" aria-live="polite"></div><script src="./app.js"></script><script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}</script>
 </body></html>
