@@ -1,8 +1,9 @@
 # Supabase Edge Function deployment
 
-Deploy the admin endpoint from the repository root with Supabase CLI:
+From the repository root, enter the V2 directory and deploy with Supabase CLI:
 
 ```bash
+cd v2
 supabase functions deploy admin
 supabase secrets set SUPABASE_URL="https://ybwxcpblvsrjbazdueya.supabase.co" SUPABASE_ANON_KEY="<publishable-or-anon-key>" SUPABASE_SERVICE_ROLE_KEY="<server-only-service-role-key>"
 ```
