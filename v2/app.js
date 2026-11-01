@@ -69,13 +69,21 @@ async function enterLearner(){
 async function loadAchievements(){const root=$('#achievementsList');if(!root||!currentUser)return;try{const {data,error}=await supabaseClient.from('user_achievements').select('achievement_key,title,description,awarded_at').eq('user_id',currentUser.id).order('awarded_at',{ascending:false}).limit(100);if(error)throw error;root.innerHTML=data?.length?'<ul>'+data.map(x=>'<li><b>'+escapeHtml(x.title)+'</b> — '+escapeHtml(x.description||'')+'</li>').join('')+'</ul>':'עדיין אין הישגים. הם יתווספו ככל שתתקדם בלמידה.'}catch(e){root.textContent='לא ניתן לטעון הישגים: '+e.message}}
 async function refreshLearnerStats(){
  if(!currentUser)return;
- const [progress,tests]=await Promise.all([
-  supabaseClient.from('user_progress').select('content_item_id,mastery').eq('user_id',currentUser.id),
-  supabaseClient.from('test_results').select('score,completed_at').eq('user_id',currentUser.id).order('completed_at',{ascending:false}).limit(100)
- ]);
- if(progress.error)console.warn(progress.error);if(tests.error)console.warn(tests.error);
- const mastered=(progress.data||[]).filter(x=>x.mastery>=3).length,results=tests.data||[];
- $('#learnedCount').textContent=mastered;$('#testCount').textContent=results.length;$('#lastScore').textContent=results.length?Math.round(Number(results[0].score))+'%':'—';
+ let progressRows=[],testRows=[];
+ if(navigator.onLine&&supabaseClient){
+  const [progress,tests]=await Promise.all([
+   supabaseClient.from('user_progress').select('content_item_id,mastery').eq('user_id',currentUser.id),
+   supabaseClient.from('test_results').select('score,completed_at').eq('user_id',currentUser.id).order('completed_at',{ascending:false}).limit(100)
+  ]);
+  if(!progress.error)progressRows=progress.data||[];else console.warn(progress.error);
+  if(!tests.error)testRows=tests.data||[];else console.warn(tests.error);
+  if(!progress.error)writeLocal('progress:'+currentUser.id,Object.fromEntries(progressRows.map(x=>[x.content_item_id,x])));
+  if(!tests.error)writeLocal('tests:'+currentUser.id,testRows);
+ }
+ if(!progressRows.length)progressRows=Object.values(readLocal('progress:'+currentUser.id,{}));
+ if(!testRows.length)testRows=readLocal('tests:'+currentUser.id,[]);
+ const mastered=progressRows.filter(x=>x.mastery>=3).length;
+ $('#learnedCount').textContent=mastered;$('#testCount').textContent=testRows.length;$('#lastScore').textContent=testRows.length?Math.round(Number(testRows[0].score))+'%':'—';
 }
 async function loadLearning(type='word'){
  if(!supabaseClient||!currentUser||!learnerProfile)return;
