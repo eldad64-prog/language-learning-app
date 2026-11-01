@@ -40,7 +40,12 @@ test("edge function verifies owner role and computes learner achievements server
   assert.match(edge, /enforceRateLimit/);
 });
 
-test("service worker keeps a versioned local app shell", () => {
-  assert.match(sw, /lingua-v2-shell-/);
-  assert.match(sw, /'\.\/app\.js'/);
+test("offline support caches SDK and queues private learner progress", () => {
+  assert.match(sw, /lingua-v2-shell-5/);
+  assert.match(sw, /SUPABASE_SDK/);
+  assert.match(app, /function syncOfflineQueue\(/);
+  assert.match(app, /progressQueueKey/);
+  assert.match(app, /writeLocal\('content:/);
+  assert.match(app, /נשמר במכשיר/);
+  assert.match(app, /מצב לא מקוון/);
 });
