@@ -42,4 +42,4 @@ All user-owned tables require RLS policies tied to auth.uid(). Admin operations 
 6. Keep the current production app unchanged until the owner explicitly approves a cutover.
 
 ## Current status
-Workspace and product/security requirements initialized. Supabase connection and database migration are not configured yet; no credentials have been added.
+V2 UI prototype and first Supabase schema/RLS baseline have been committed on the isolated development branch. PWA shell caching files are included. The app is NOT production-ready: Supabase project URL/public key are not configured, the SQL has not been applied or security-tested, and signup/login/approval/admin actions are placeholders until trusted backend functions are deployed. No credentials have been added.
