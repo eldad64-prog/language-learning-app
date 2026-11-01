@@ -30,6 +30,12 @@ jobs:
           node --check v2/app.js
           node --check v2/supabase-config.js
           node --check v2/sw.js
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Supabase Edge Function
+        run: deno check --no-lock v2/supabase/functions/admin/index.ts
       - name: Verify browser bundle contains no server secrets
         run: |
           if grep -R -n -E 'service_role|sb_secret|SUPABASE_SERVICE_ROLE_KEY' v2 --include='*.js' --include='*.html'; then
