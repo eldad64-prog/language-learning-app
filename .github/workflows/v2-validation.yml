@@ -30,6 +30,7 @@ jobs:
           node --check v2/app.js
           node --check v2/supabase-config.js
           node --check v2/sw.js
+          node --test v2/tests/*.test.mjs
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
@@ -51,3 +52,4 @@ jobs:
           test -s v2/supabase/functions/admin/index.ts
           test -s v2/supabase-achievements-migration.sql
           test -s v2/supabase-rate-limits-migration.sql
+          test -s v2/tests/smoke.test.mjs
