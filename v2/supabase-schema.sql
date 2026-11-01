@@ -1,13 +1,19 @@
--- Lingua V2 / Supabase PostgreSQL schema
--- Apply only after reviewing in a non-production Supabase project.
+-- Lingua V2 / repeatable Supabase PostgreSQL schema.
+-- Safe to re-run on a project created from this schema. Review existing installations
+-- before applying; CREATE TABLE IF NOT EXISTS does not retrofit arbitrary old columns.
 -- Never expose the service_role key in browser code.
 
+begin;
 create extension if not exists pgcrypto;
 
-create type public.approval_state as enum ('pending','approved','rejected','suspended');
-create type public.content_state as enum ('draft','published','archived');
+do $$ begin
+  create type public.approval_state as enum ('pending','approved','rejected','suspended');
+exception when duplicate_object then null; end $$;
+do $$ begin
+  create type public.content_state as enum ('draft','published','archived');
+exception when duplicate_object then null; end $$;
 
-create table public.profiles (
+create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text not null check (char_length(display_name) between 1 and 60),
   learning_language text not null check (learning_language in ('he','en','th')),
@@ -17,8 +23,7 @@ create table public.profiles (
   updated_at timestamptz not null default now(),
   constraint distinct_languages check (learning_language <> translation_language)
 );
-
-create table public.content_items (
+create table if not exists public.content_items (
   id uuid primary key default gen_random_uuid(),
   learning_language text not null check (learning_language in ('he','en','th')),
   translation_language text not null check (translation_language in ('he','en','th')),
@@ -36,8 +41,7 @@ create table public.content_items (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
-create table public.user_progress (
+create table if not exists public.user_progress (
   user_id uuid not null references auth.users(id) on delete cascade,
   content_item_id uuid not null references public.content_items(id) on delete cascade,
   mastery smallint not null default 0 check (mastery between 0 and 5),
@@ -47,8 +51,7 @@ create table public.user_progress (
   updated_at timestamptz not null default now(),
   primary key(user_id,content_item_id)
 );
-
-create table public.test_results (
+create table if not exists public.test_results (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   language_pair text not null,
@@ -57,8 +60,7 @@ create table public.test_results (
   correct_count integer not null check (correct_count between 0 and question_count),
   completed_at timestamptz not null default now()
 );
-
-create table public.learning_events (
+create table if not exists public.learning_events (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   event_type text not null check (event_type in ('login','study','test','achievement')),
@@ -67,8 +69,7 @@ create table public.learning_events (
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
-
-create table public.admin_audit_log (
+create table if not exists public.admin_audit_log (
   id bigint generated always as identity primary key,
   actor_id uuid not null references auth.users(id),
   action text not null,
@@ -76,24 +77,28 @@ create table public.admin_audit_log (
   details jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
+create table if not exists public.user_achievements (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  achievement_key text not null check (char_length(achievement_key) between 1 and 80),
+  title text not null check (char_length(title) between 1 and 120),
+  description text not null default '',
+  awarded_at timestamptz not null default now(),
+  unique(user_id, achievement_key)
+);
 
 -- Admin identity is an immutable app_metadata claim set only by a trusted operator.
--- Clients cannot update auth.users.raw_app_meta_data. Do NOT use user_metadata or profiles.role.
 create or replace function public.is_owner_admin()
 returns boolean language sql stable security definer
 set search_path = '' as $$
   select coalesce((auth.jwt() -> 'app_metadata' ->> 'role') = 'owner_admin', false);
 $$;
-
 create or replace function public.is_approved_user()
 returns boolean language sql stable security definer
 set search_path = '' as $$
-  select exists (
-    select 1 from public.profiles p
-    where p.id = (select auth.uid()) and p.approval_status = 'approved'
-  );
+  select exists (select 1 from public.profiles p
+    where p.id = (select auth.uid()) and p.approval_status = 'approved');
 $$;
-
 create or replace function public.create_profile_for_new_user()
 returns trigger language plpgsql security definer
 set search_path = '' as $$
@@ -106,32 +111,29 @@ begin
     learning := 'th'; translation := 'he';
   end if;
   insert into public.profiles(id,display_name,learning_language,translation_language)
-  values(new.id,left(display_name,60),learning,translation);
+  values(new.id,left(display_name,60),learning,translation)
+  on conflict (id) do nothing;
   return new;
 end;
 $$;
-
-create trigger on_auth_user_created
-after insert on auth.users
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users
 for each row execute procedure public.create_profile_for_new_user();
 
 create or replace function public.guard_profile_changes()
 returns trigger language plpgsql
 set search_path = '' as $$
 begin
-  -- The Edge Function uses the server-only service_role key after verifying the
-  -- owner's immutable app_metadata claim. Allow that trusted server context.
   if current_setting('request.jwt.claim.role', true) = 'service_role' then
-    new.updated_at := now();
-    return new;
+    new.updated_at := now(); return new;
   end if;
   if new.id <> old.id or new.approval_status <> old.approval_status then
     raise exception 'Protected profile fields can only be changed by trusted administration';
   end if;
-  new.updated_at := now();
-  return new;
+  new.updated_at := now(); return new;
 end;
 $$;
+drop trigger if exists profiles_guard on public.profiles;
 create trigger profiles_guard before update on public.profiles
 for each row execute procedure public.guard_profile_changes();
 
@@ -141,66 +143,66 @@ alter table public.user_progress enable row level security;
 alter table public.test_results enable row level security;
 alter table public.learning_events enable row level security;
 alter table public.admin_audit_log enable row level security;
+alter table public.user_achievements enable row level security;
 
--- Revoke broad defaults; grant only the operations required by the app.
-revoke all on public.profiles, public.content_items, public.user_progress, public.test_results, public.learning_events, public.admin_audit_log from anon, authenticated;
+revoke all on public.profiles, public.content_items, public.user_progress, public.test_results,
+  public.learning_events, public.admin_audit_log, public.user_achievements from anon, authenticated;
 grant select on public.profiles to authenticated;
 grant update (display_name,learning_language,translation_language) on public.profiles to authenticated;
 grant select on public.content_items to authenticated;
 grant select,insert,update,delete on public.user_progress to authenticated;
 grant select,insert on public.test_results to authenticated;
 grant select,insert on public.learning_events to authenticated;
-grant select on public.admin_audit_log to authenticated;
+grant select on public.admin_audit_log, public.user_achievements to authenticated;
 
+drop policy if exists "profile self or owner admin read" on public.profiles;
 create policy "profile self or owner admin read" on public.profiles for select to authenticated
 using (id = (select auth.uid()) or (select public.is_owner_admin()));
+drop policy if exists "profile self update preferences" on public.profiles;
 create policy "profile self update preferences" on public.profiles for update to authenticated
 using (id = (select auth.uid()) and approval_status = 'approved')
 with check (id = (select auth.uid()) and approval_status = 'approved');
-
+drop policy if exists "approved users read published content" on public.content_items;
 create policy "approved users read published content" on public.content_items for select to authenticated
 using ((status = 'published' and (select public.is_approved_user())) or (select public.is_owner_admin()));
+drop policy if exists "owner admin manage content" on public.content_items;
 create policy "owner admin manage content" on public.content_items for all to authenticated
 using ((select public.is_owner_admin())) with check ((select public.is_owner_admin()));
-
+drop policy if exists "users manage own progress" on public.user_progress;
 create policy "users manage own progress" on public.user_progress for all to authenticated
 using (user_id = (select auth.uid()) and (select public.is_approved_user()))
 with check (user_id = (select auth.uid()) and (select public.is_approved_user()));
+drop policy if exists "users read own tests" on public.test_results;
 create policy "users read own tests" on public.test_results for select to authenticated
 using (user_id = (select auth.uid()) or (select public.is_owner_admin()));
+drop policy if exists "users insert own tests" on public.test_results;
 create policy "users insert own tests" on public.test_results for insert to authenticated
 with check (user_id = (select auth.uid()) and (select public.is_approved_user()));
+drop policy if exists "users read own events" on public.learning_events;
 create policy "users read own events" on public.learning_events for select to authenticated
 using (user_id = (select auth.uid()) or (select public.is_owner_admin()));
+drop policy if exists "users insert own events" on public.learning_events;
 create policy "users insert own events" on public.learning_events for insert to authenticated
 with check (user_id = (select auth.uid()) and (select public.is_approved_user()));
+drop policy if exists "owner admin read audit log" on public.admin_audit_log;
 create policy "owner admin read audit log" on public.admin_audit_log for select to authenticated
 using ((select public.is_owner_admin()));
+drop policy if exists "owner admin read all progress" on public.user_progress;
 create policy "owner admin read all progress" on public.user_progress for select to authenticated
 using ((select public.is_owner_admin()));
+drop policy if exists "users read own achievements" on public.user_achievements;
+create policy "users read own achievements" on public.user_achievements for select to authenticated
+using (user_id = (select auth.uid()) or (select public.is_owner_admin()));
 
--- IMPORTANT operational steps (trusted SQL editor / server-side only):
--- 1) Create the first owner account through Supabase Auth signup.
--- 2) Obtain that account's UUID from auth.users after verifying ownership.
--- 3) In the Supabase SQL editor, set ONLY that verified UUID's app_metadata claim:
---    update auth.users
---    set raw_app_meta_data = coalesce(raw_app_meta_data,'{}'::jsonb) || '{"role":"owner_admin"}'::jsonb
---    where id = '<VERIFIED_OWNER_UUID>';
--- 4) Approve the owner profile using the trusted SQL editor:
---    update public.profiles set approval_status='approved' where id='<VERIFIED_OWNER_UUID>';
--- 5) Admin approval/suspension/content publishing should be exposed through Edge Functions
---    that validate is_owner_admin() server-side, validate input, rate-limit, and append audit rows.
--- 6) Do not expose this SQL editor, service key, or any admin credential to ordinary users.
--- 7) Review RLS with at least two ordinary test accounts before launch.
-
--- Helpful indexes for learner feeds and owner dashboard queries.
 create index if not exists content_items_published_pair_idx
-  on public.content_items(learning_language, translation_language, item_type, category)
-  where status = 'published';
-create index if not exists profiles_approval_created_idx
-  on public.profiles(approval_status, created_at desc);
-create index if not exists learning_events_user_created_idx
-  on public.learning_events(user_id, created_at desc);
-create index if not exists test_results_user_completed_idx
-  on public.test_results(user_id, completed_at desc);
+  on public.content_items(learning_language,translation_language,item_type,category) where status='published';
+create index if not exists profiles_approval_created_idx on public.profiles(approval_status,created_at desc);
+create index if not exists learning_events_user_created_idx on public.learning_events(user_id,created_at desc);
+create index if not exists test_results_user_completed_idx on public.test_results(user_id,completed_at desc);
+create index if not exists user_achievements_user_awarded_idx on public.user_achievements(user_id,awarded_at desc);
 
+-- Bootstrap the owner only after verifying the exact Auth user UUID in the Supabase SQL editor:
+-- update auth.users set raw_app_meta_data = coalesce(raw_app_meta_data,'{}'::jsonb) || '{"role":"owner_admin"}'::jsonb where id='<VERIFIED_OWNER_UUID>';
+-- update public.profiles set approval_status='approved' where id='<VERIFIED_OWNER_UUID>';
+-- Never place service_role credentials in browser code or send them in chat.
+commit;
