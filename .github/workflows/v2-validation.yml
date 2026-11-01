@@ -1,0 +1,57 @@
+name: V2 validation
+on:
+  push:
+    branches: [v2-platform-development]
+    paths:
+      - "v2/**"
+      - ".github/workflows/v2-validation.yml"
+  pull_request:
+    branches: [v2-platform-development]
+    paths:
+      - "v2/**"
+      - ".github/workflows/v2-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check JavaScript syntax
+        run: |
+          node --check v2/app.js
+          node --check v2/supabase-config.js
+          node --check v2/sw.js
+          node --test v2/tests/*.test.mjs
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Supabase Edge Function
+        run: deno check --no-lock v2/supabase/functions/admin/index.ts
+      - name: Verify browser bundle contains no server secrets
+        run: |
+          if grep -R -n -E 'service_role|sb_secret|SUPABASE_SERVICE_ROLE_KEY' v2 --include='*.js' --include='*.html'; then
+            echo "Server-side secret material must never appear in browser files."
+            exit 1
+          fi
+      - name: Verify required V2 files
+        run: |
+          test -s v2/index.html
+          test -s v2/app.css
+          test -s v2/app.js
+          test -s v2/supabase-schema.sql
+          test -s v2/supabase/functions/admin/index.ts
+          test -s v2/supabase-achievements-migration.sql
+          test -s v2/supabase-rate-limits-migration.sql
+          test -s v2/EDGE_DEPLOYMENT.md
+          test -s v2/README.md
+          test -s v2/tests/smoke.test.mjs
