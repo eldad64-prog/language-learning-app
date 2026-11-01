@@ -84,8 +84,9 @@ async function loadLearning(type='word'){
  if(error){learningItems=readLocal('content:'+learning+':'+translation+':'+type,[]);if(learningItems.length)$('#learningNotice').textContent='מצב לא מקוון · מוצגים '+learningItems.length+' פריטים שמורים.';else{$('#learningNotice').textContent='אין תכנים שמורים במצב לא מקוון. התחבר לאינטרנט לטעינה ראשונה.';return}}else{learningItems=data||[];writeLocal('content:'+learning+':'+translation+':'+type,learningItems)}$('#availableCount').textContent=learningItems.length;
  if(!learningItems.length){$('#learningNotice').textContent='עדיין לא פורסמו '+(type==='word'?'מילים':'משפטים')+' בצמד השפות שבחרת. התוכן יופיע כאן לאחר פרסומו.';return}
  $('#learningNotice').textContent='נמצאו '+learningItems.length+' פריטים. לחץ על „תרגלתי” כדי לשמור התקדמות.';
- const {data:progress}=await supabaseClient.from('user_progress').select('content_item_id,mastery').eq('user_id',currentUser.id).in('content_item_id',learningItems.map(x=>x.id));
- const mastered=new Map((progress||[]).map(x=>[x.content_item_id,x.mastery]));
+ const {data:progress,error:progressError}=await supabaseClient.from('user_progress').select('content_item_id,mastery').eq('user_id',currentUser.id).in('content_item_id',learningItems.map(x=>x.id));
+ const localProgress=readLocal('progress:'+currentUser.id,{});
+ const mastered=new Map((progressError?Object.values(localProgress):(progress||[])).map(x=>[x.content_item_id,x.mastery]));
  $('#learningList').innerHTML=learningItems.map(item=>'<article class="learning-card"><div class="learning-card-copy"><small>'+escapeHtml(item.category||'כללי')+'</small><h3>'+escapeHtml(item.source_text)+'</h3><p>'+escapeHtml(item.translation_text)+'</p>'+(item.transliteration?'<small class="transliteration">'+escapeHtml(item.transliteration)+'</small>':'')+'</div><div class="learning-actions"><button class="secondary" data-speak="'+item.id+'">🔊 שמע</button><button class="secondary" data-learned="'+item.id+'">'+(mastered.get(item.id)>=3?'נלמד ✓':'תרגלתי')+'</button></div></article>').join('');
  $('#learningList').querySelectorAll('[data-speak]').forEach(b=>b.addEventListener('click',()=>speakItem(b.dataset.speak)));
  $('#learningList').querySelectorAll('[data-learned]').forEach(b=>b.addEventListener('click',()=>markLearned(b.dataset.learned,b)));
