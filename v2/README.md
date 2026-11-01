@@ -10,6 +10,7 @@ This directory is the isolated V2 workspace. The existing production app at the 
 - Shared centrally managed learning content, with draft/review/publish workflow.
 - Personal learning progress, test results, achievements, and usage remain scoped to each account.
 - Learner workspace includes published word/sentence feeds, device speech playback, per-item progress, and randomized short quizzes (up to 10 questions).
+- Owner dashboard now shows per-user language pair, approval state, last activity, last login, learned-item count, recorded study minutes, test count, and average score. Study duration is recorded when a learner leaves or backgrounds the app; very short sessions may not be recorded.
 - Achievements are stored in a separate private table; only trusted server-side processes may award them.
 - Owner-only aggregate and per-user administration dashboard.
 - New app must be tested separately before any production cutover.
@@ -44,4 +45,4 @@ All user-owned tables require RLS policies tied to auth.uid(). Admin operations 
 6. Keep the current production app unchanged until the owner explicitly approves a cutover.
 
 ## Current status
-V2 registration/login/admin UI and a first learner workspace are committed on the isolated development branch. The browser configuration contains only the Supabase project URL and publishable key; no service-role or secret key is present. The SQL and Edge Function have NOT been deployed or security-tested, so registration, approval, content delivery, progress sync, and quizzes cannot be considered live until the database migration and server function are deployed and tested.
+V2 registration/login/admin UI and a first learner workspace are committed on the isolated development branch. The browser configuration contains only the Supabase project URL and publishable key; no service-role or secret key is present. The SQL and Edge Function have NOT been deployed or security-tested, so registration, approval, content delivery, progress sync, and quizzes cannot be considered live until the database migration and server function are deployed and tested. GitHub Actions syntax/secret/file validation is passing on the development branch; this does not validate live Supabase behavior.
