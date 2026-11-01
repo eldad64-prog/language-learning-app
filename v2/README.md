@@ -9,7 +9,7 @@ This directory is the isolated V2 workspace. The existing production app at the 
 - Exactly one owner-controlled administrator. Public registration must never grant admin privileges.
 - Shared centrally managed learning content, with draft/review/publish workflow.
 - Personal learning progress, test results, achievements, and usage remain scoped to each account.
-- Learner workspace includes published word/sentence feeds, device speech playback, per-item progress, randomized short quizzes (up to 10 questions), editable language-pair preferences, and a private achievements list.
+- Learner workspace includes published word/sentence feeds, device speech playback, per-item progress, randomized short quizzes (up to 10 questions), editable language-pair preferences, a private achievements list awarded by server-side evaluation, and owner editing of saved content drafts.
 - Owner dashboard shows aggregate users, pending approvals, weekly activity events, published content, and average test score; per-user details include language pair, approval state, last activity, last login, learned-item count, recorded study minutes, test count, and average score. Study duration is recorded when a learner leaves or backgrounds the app; very short sessions may not be recorded.
 - Achievements are stored in a separate private table; only trusted server-side processes may award them.
 - Owner-only aggregate and per-user administration dashboard.
@@ -48,11 +48,12 @@ All user-owned tables require RLS policies tied to auth.uid(). Admin operations 
 V2 registration/login/admin UI and a first learner workspace are committed on the isolated development branch. The browser configuration contains only the Supabase project URL and publishable key; no service-role or secret key is present. The SQL and Edge Function have NOT been deployed or security-tested, so registration, approval, content delivery, progress sync, and quizzes cannot be considered live until the database migration and server function are deployed and tested. GitHub Actions checks JavaScript syntax, Deno type-checks the Edge Function, scans browser files for server secrets, and verifies required files. A green CI run does not validate live Supabase behavior.
 ## Remaining release blockers
 
-- Apply and review `supabase-schema.sql` and the achievements migration in the intended Supabase project.
+- Apply and review `supabase-schema.sql`, `supabase-achievements-migration.sql`, and `supabase-rate-limits-migration.sql` in the intended Supabase project (the main schema already includes the latter objects; the separate migrations are safe for incremental setups).
 - Deploy the `admin` Edge Function and configure server-only secrets, including the exact `APP_ORIGIN`.
 - Verify the owner's Auth UUID, provision the immutable `owner_admin` app-metadata claim out-of-band, and approve that profile.
 - Perform end-to-end tests for signup/email verification, pending/approved/rejected/suspended access, RLS isolation, language changes, content draft/publish, progress, quiz scoring, and mobile PWA behavior.
 - Implement persistent rate limiting and complete offline content/progress queue + sync before describing offline learning as supported.
 - Build and review the requested multilingual content library; no large content set is auto-published by this branch.
+- Verify the current PWA shell on Android and iPhone after cache version `lingua-v2-shell-4`; this is shell caching only, not offline content/progress sync.
 
 The production root app and `main` branch remain unchanged. Do not merge the draft PR until all release blockers are cleared.
