@@ -78,7 +78,7 @@ async function markLearned(id,button){
  try{const {data:existing}=await supabaseClient.from('user_progress').select('mastery,times_seen,times_correct').eq('user_id',currentUser.id).eq('content_item_id',id).maybeSingle();
  const row={user_id:currentUser.id,content_item_id:id,mastery:Math.min(5,(existing?.mastery||0)+1),times_seen:(existing?.times_seen||0)+1,times_correct:existing?.times_correct||0,last_seen_at:new Date().toISOString(),updated_at:new Date().toISOString()};
  const {error}=await supabaseClient.from('user_progress').upsert(row,{onConflict:'user_id,content_item_id'});if(error)throw error;
- await logEvent('study',{content_item_id:id});button.textContent='נשמר ✓';await refreshLearnerStats()
+ await logEvent('study',{content_item_id:id});await callAdmin({action:'sync_achievements'});await loadAchievements();button.textContent='נשמר ✓';await refreshLearnerStats()
  }catch(e){button.textContent=old;toast('שמירת ההתקדמות נכשלה: '+e.message)}finally{button.disabled=false}
 }
 function startQuiz(){
@@ -103,7 +103,7 @@ async function nextQuiz(){
  if(!quizAnswered)return;quizIndex++;
  if(quizIndex<quizItems.length){renderQuestion();return}
  const score=Math.round(quizCorrect/quizItems.length*100);
- try{const {error}=await supabaseClient.from('test_results').insert({user_id:currentUser.id,language_pair:learning+'-'+translation,score,question_count:quizItems.length,correct_count:quizCorrect});if(error)throw error;await logEvent('test',{score,question_count:quizItems.length});$('#quizQuestion').innerHTML='<h3>המבחן הסתיים</h3><p>ענית נכון על '+quizCorrect+' מתוך '+quizItems.length+' שאלות — '+score+'%.</p>';$('#quizAnswers').innerHTML='';$('#quizFeedback').textContent='התוצאה נשמרה בהתקדמות האישית שלך.';$('#nextQuestion').classList.add('hidden');await refreshLearnerStats()}
+ try{const {error}=await supabaseClient.from('test_results').insert({user_id:currentUser.id,language_pair:learning+'-'+translation,score,question_count:quizItems.length,correct_count:quizCorrect});if(error)throw error;await logEvent('test',{score,question_count:quizItems.length});await callAdmin({action:'sync_achievements'});await loadAchievements();$('#quizQuestion').innerHTML='<h3>המבחן הסתיים</h3><p>ענית נכון על '+quizCorrect+' מתוך '+quizItems.length+' שאלות — '+score+'%.</p>';$('#quizAnswers').innerHTML='';$('#quizFeedback').textContent='התוצאה נשמרה בהתקדמות האישית שלך.';$('#nextQuestion').classList.add('hidden');await refreshLearnerStats()}
  catch(e){toast('לא ניתן לשמור את תוצאת המבחן: '+e.message)}
 }
 $('#registerForm').addEventListener('submit',async e=>{e.preventDefault();const p=$('#password').value,p2=$('#password2').value;if(p!==p2){toast('הסיסמאות אינן תואמות.');return}if(learning===translation){toast('בחר שפת לימוד ושפת תרגום שונות.');return}if(!supabaseClient||!schemaReady){toast('מסד הנתונים טרם הותקן.');return}const btn=$('#registerForm button[type=submit]');btn.disabled=true;try{const {data,error}=await supabaseClient.auth.signUp({email:$('#email').value.trim(),password:p,options:{data:{display_name:$('#displayName').value.trim(),learning_language:learning,translation_language:translation}}});if(error)throw error;toast(data.session?'החשבון נוצר וממתין לאישור מנהל.':'נשלח אימייל אימות. לאחר האימות החשבון ימתין לאישור מנהל.')}catch(err){toast('הרשמה נכשלה: '+err.message)}finally{btn.disabled=false}});
