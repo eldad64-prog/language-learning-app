@@ -11,3 +11,8 @@ supabase secrets set SUPABASE_URL="https://ybwxcpblvsrjbazdueya.supabase.co" SUP
 The service-role key must be entered only into Supabase Edge Function secrets, never committed to GitHub or placed in browser code. Configure the first owner account out-of-band in Supabase SQL Editor using its verified auth UUID, as documented in `supabase-schema.sql`.
 
 Set APP_ORIGIN to the exact HTTPS origin serving V2 (scheme and hostname, no trailing slash). The function rejects requests from every other browser origin; update this secret if the V2 host changes. The endpoint verifies the JWT using Supabase Auth and checks the immutable `app_metadata.role = owner_admin` claim before any privileged action. It supports owner-only user listing, approval/rejection/suspension, content draft editing, batch publication, and aggregate dashboard metrics. Review and test policies and rate limits before production use.
+
+
+## Incremental achievements migration
+
+After applying the main schema, apply `supabase-achievements-migration.sql` to add the private achievements table. It grants authenticated users read access only to their own achievements (and the owner administrator can read all); clients cannot award achievements. Awarding achievements must be performed by a trusted server-side function.
