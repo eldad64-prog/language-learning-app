@@ -52,4 +52,6 @@ jobs:
           test -s v2/supabase/functions/admin/index.ts
           test -s v2/supabase-achievements-migration.sql
           test -s v2/supabase-rate-limits-migration.sql
+          test -s v2/EDGE_DEPLOYMENT.md
+          test -s v2/README.md
           test -s v2/tests/smoke.test.mjs
