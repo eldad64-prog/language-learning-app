@@ -56,6 +56,8 @@ test("offline reconnect sync preserves quiz results and quiz-earned progress", (
   assert.match(app, /crypto\.randomUUID\(\)/);
   assert.match(app, /syncingOfflineQueue/);
   assert.match(app, /Quiz progress saved locally after sync error/);
+  assert.match(app, /Math\.max\(row\.mastery\|\|0,remote\?\.mastery\|\|0\)/);
+  assert.match(app, /Math\.max\(row\.times_seen\|\|0,remote\?\.times_seen\|\|0\)/);
 });
 
 test("offline quiz fallback does not double-increment locally saved progress", () => {
