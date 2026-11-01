@@ -119,6 +119,12 @@ create or replace function public.guard_profile_changes()
 returns trigger language plpgsql
 set search_path = '' as $$
 begin
+  -- The Edge Function uses the server-only service_role key after verifying the
+  -- owner's immutable app_metadata claim. Allow that trusted server context.
+  if current_setting('request.jwt.claim.role', true) = 'service_role' then
+    new.updated_at := now();
+    return new;
+  end if;
   if new.id <> old.id or new.approval_status <> old.approval_status then
     raise exception 'Protected profile fields can only be changed by trusted administration';
   end if;
@@ -186,3 +192,15 @@ using ((select public.is_owner_admin()));
 --    that validate is_owner_admin() server-side, validate input, rate-limit, and append audit rows.
 -- 6) Do not expose this SQL editor, service key, or any admin credential to ordinary users.
 -- 7) Review RLS with at least two ordinary test accounts before launch.
+
+-- Helpful indexes for learner feeds and owner dashboard queries.
+create index if not exists content_items_published_pair_idx
+  on public.content_items(learning_language, translation_language, item_type, category)
+  where status = 'published';
+create index if not exists profiles_approval_created_idx
+  on public.profiles(approval_status, created_at desc);
+create index if not exists learning_events_user_created_idx
+  on public.learning_events(user_id, created_at desc);
+create index if not exists test_results_user_completed_idx
+  on public.test_results(user_id, completed_at desc);
+
