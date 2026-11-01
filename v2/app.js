@@ -4,6 +4,12 @@ let learning='th',translation='he',toastTimer,editingDraftId=null,supabaseClient
 const languageNames={he:'עברית',en:'אנגלית',th:'תאית'};
 const LOCAL_PREFIX='lingua-v2:';
 function readLocal(key,fallback){try{const value=localStorage.getItem(LOCAL_PREFIX+key);return value?JSON.parse(value):fallback}catch{return fallback}}
+function writeLocal(key,value){try{localStorage.setItem(LOCAL_PREFIX+key,JSON.stringify(value));return true}catch(e){console.warn('Local cache unavailable',e);return false}}
+function progressQueueKey(){return 'queue:'+currentUser?.id}
+async function syncOfflineQueue(){if(!currentUser||!supabaseClient||!navigator.onLine)return;const key=progressQueueKey(),queue=readLocal(key,[]),remaining=[];for(const row of queue){try{const {error}=await supabaseClient.from('user_progress').upsert(row,{onConflict:'user_id,content_item_id'});if(error)throw error}catch(e){remaining.push(row)}}writeLocal(key,remaining);if(!remaining.length&&queue.length)await refreshLearnerStats()}
+window.addEventListener('online',syncOfflineQueue);
+const LOCAL_PREFIX='lingua-v2:';
+function readLocal(key,fallback){try{const value=localStorage.getItem(LOCAL_PREFIX+key);return value?JSON.parse(value):fallback}catch{return fallback}}
 function writeLocal(key,value){try{localStorage.setItem(LOCAL_PREFIX+key,JSON.stringify(value));return true}catch(e){console.warn('Local storage unavailable',e);return false}}
 function progressQueueKey(){return 'queue:'+currentUser?.id}
 async function syncOfflineQueue(){if(!currentUser||!supabaseClient||!navigator.onLine)return;const key=progressQueueKey(),queue=readLocal(key,[]);if(!queue.length)return;const remaining=[];for(const row of queue){try{const {error}=await supabaseClient.from('user_progress').upsert(row,{onConflict:'user_id,content_item_id'});if(error)throw error}catch(e){remaining.push(row);console.warn('Offline progress sync deferred',e.message)}}writeLocal(key,remaining);if(!remaining.length){toast('ההתקדמות שנשמרה ללא אינטרנט סונכרנה.');await refreshLearnerStats()}}
