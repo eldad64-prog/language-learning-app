@@ -26,11 +26,10 @@ async function init(){
  const {url,publishableKey}=window.LINGUA_SUPABASE_CONFIG;
  supabaseClient=window.supabase.createClient(url,publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  try{
-  const {error}=await supabaseClient.from('profiles').select('id').limit(1);
-  if(error){setConnection('החיבור מוכן; ממתינים להתקנת מסד הנתונים');console.info('Schema not ready:',error.message);return}
-  schemaReady=true;setConnection('החיבור למסד הנתונים פעיל',true);
   const {data:{session}}=await supabaseClient.auth.getSession();
-  if(session){currentUser=session.user;if(isOwner())setView('admin');else await routeLearner()}
+  const {error}=await supabaseClient.from('profiles').select('id').limit(1);
+  if(error){setConnection('אין חיבור למסד הנתונים · מצב לא מקוון');if(session){currentUser=session.user;if(!isOwner())await routeLearner()}else console.info('Database unavailable:',error.message)}
+  else{schemaReady=true;setConnection('החיבור למסד הנתונים פעיל',true);if(session){currentUser=session.user;if(isOwner())setView('admin');else await routeLearner();await syncOfflineQueue()}}
   supabaseClient.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT'){currentUser=null;learnerProfile=null;setView('login')}});
  }catch(err){setConnection('לא ניתן לאמת את מסד הנתונים');console.error(err)}
 }
