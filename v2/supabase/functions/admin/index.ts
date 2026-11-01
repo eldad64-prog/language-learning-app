@@ -36,11 +36,53 @@ Deno.serve(async (req) => {
   });
   const { data: { user }, error: authError } = await userClient.auth.getUser(token);
   if (authError || !user) return json({ error: "Invalid session" }, 401, requestOrigin);
-  if (user.app_metadata?.role !== "owner_admin") return json({ error: "Owner administrator only" }, 403, requestOrigin);
 
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400, requestOrigin); }
+
+  // Learners may request achievement evaluation for their own approved account only.
+  // All counters are recomputed server-side; client-supplied progress is never trusted.
+  if (body.action === "sync_achievements") {
+    const { data: profile, error: profileError } = await admin.from("profiles")
+      .select("approval_status").eq("id", user.id).maybeSingle();
+    if (profileError || profile?.approval_status !== "approved") {
+      return json({ error: "Approved learner account required" }, 403, requestOrigin);
+    }
+    const [progress, tests] = await Promise.all([
+      admin.from("user_progress").select("mastery").eq("user_id", user.id),
+      admin.from("test_results").select("score").eq("user_id", user.id),
+    ]);
+    if (progress.error || tests.error) return json({ error: "Unable to evaluate achievements" }, 400, requestOrigin);
+    const learned = (progress.data ?? []).filter((x) => Number(x.mastery) >= 3).length;
+    const testCount = (tests.data ?? []).length;
+    const bestScore = (tests.data ?? []).reduce((best, x) => Math.max(best, Number(x.score)), 0);
+    const candidates = [
+      { key: "first_item", title: "הצעד הראשון", description: "למדת את הפריט הראשון שלך", earned: learned >= 1 },
+      { key: "learner_10", title: "מתחילים להתקדם", description: "למדת 10 פריטים", earned: learned >= 10 },
+      { key: "learner_50", title: "לומד מתמיד", description: "למדת 50 פריטים", earned: learned >= 50 },
+      { key: "learner_100", title: "מאה הצלחות", description: "למדת 100 פריטים", earned: learned >= 100 },
+      { key: "first_test", title: "נבחן בפעם הראשונה", description: "השלמת את המבחן הראשון", earned: testCount >= 1 },
+      { key: "tests_10", title: "מתרגל בקביעות", description: "השלמת 10 מבחנים", earned: testCount >= 10 },
+      { key: "perfect_score", title: "ציון מושלם", description: "קיבלת 100% במבחן", earned: bestScore >= 100 },
+    ].filter((x) => x.earned);
+    if (!candidates.length) return json({ awarded: 0 }, 200, requestOrigin);
+    const { data, error } = await admin.from("user_achievements")
+      .upsert(candidates.map(({ key, title, description }) => ({
+        user_id: user.id, achievement_key: key, title, description,
+      })), { onConflict: "user_id,achievement_key", ignoreDuplicates: true })
+      .select("achievement_key");
+    if (error) return json({ error: "Unable to save achievements" }, 400, requestOrigin);
+    if ((data ?? []).length) {
+      await admin.from("learning_events").insert({
+        user_id: user.id, event_type: "achievement",
+        metadata: { achievement_keys: data.map((x) => x.achievement_key) },
+      });
+    }
+    return json({ awarded: (data ?? []).length }, 200, requestOrigin);
+  }
+
+  if (user.app_metadata?.role !== "owner_admin") return json({ error: "Owner administrator only" }, 403, requestOrigin);
   const action = body.action;
 
   if (action === "list_users") {
