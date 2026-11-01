@@ -35,7 +35,7 @@ test("database schema protects private data and has server-only rate limiting", 
 test("edge function verifies owner role and computes learner achievements server-side", () => {
   assert.match(edge, /user\.app_metadata\?\.role !== "owner_admin"/);
   assert.match(edge, /body\.action === "sync_achievements"/);
-  assert.match(edge, /from\("user_progress"\)\.select\("mastery"\)/);
+  assert.match(edge, /from\("user_progress"\)\.select\("content_item_id", \{ count: "exact", head: true \}\)/);
   assert.match(edge, /from\("user_achievements"\)/);
   assert.match(edge, /enforceRateLimit/);
 });
