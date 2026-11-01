@@ -2,6 +2,12 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let learning='th',translation='he',toastTimer,editingDraftId=null,supabaseClient=null,schemaReady=false,currentUser=null,drafts=[],learnerProfile=null,learningItems=[],learningType='word',quizItems=[],quizIndex=0,quizCorrect=0,quizAnswered=false,lastDurationFlush=Date.now();
 const languageNames={he:'עברית',en:'אנגלית',th:'תאית'};
+const LOCAL_PREFIX='lingua-v2:';
+function readLocal(key,fallback){try{const value=localStorage.getItem(LOCAL_PREFIX+key);return value?JSON.parse(value):fallback}catch{return fallback}}
+function writeLocal(key,value){try{localStorage.setItem(LOCAL_PREFIX+key,JSON.stringify(value));return true}catch(e){console.warn('Local storage unavailable',e);return false}}
+function progressQueueKey(){return 'queue:'+currentUser?.id}
+async function syncOfflineQueue(){if(!currentUser||!supabaseClient||!navigator.onLine)return;const key=progressQueueKey(),queue=readLocal(key,[]);if(!queue.length)return;const remaining=[];for(const row of queue){try{const {error}=await supabaseClient.from('user_progress').upsert(row,{onConflict:'user_id,content_item_id'});if(error)throw error}catch(e){remaining.push(row);console.warn('Offline progress sync deferred',e.message)}}writeLocal(key,remaining);if(!remaining.length){toast('ההתקדמות שנשמרה ללא אינטרנט סונכרנה.');await refreshLearnerStats()}}
+window.addEventListener('online',()=>syncOfflineQueue());
 function toast(message){const el=$('#toast');if(!el)return;el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),5200)}
 function setView(name){$$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.view===name));['register','login','admin','learner'].forEach(v=>$('#'+v+'View')?.classList.toggle('hidden',v!==name));if(name==='admin')refreshAdmin();if(name==='learner')loadLearning(learningType)}
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -23,7 +29,7 @@ async function init(){
  }catch(err){setConnection('לא ניתן לאמת את מסד הנתונים');console.error(err)}
 }
 function isOwner(){return currentUser?.app_metadata?.role==='owner_admin'}
-async function routeLearner(){const {data:profile,error}=await supabaseClient.from('profiles').select('approval_status').eq('id',currentUser.id).maybeSingle();if(error||!profile){toast('לא נמצא פרופיל משתמש');return}if(profile.approval_status!=='approved'){toast('החשבון ממתין לאישור מנהל.');setView('login');return}await enterLearner()}
+async function routeLearner(){const {data:profile,error}=await supabaseClient.from('profiles').select('approval_status,display_name,learning_language,translation_language').eq('id',currentUser.id).maybeSingle();if(error||!profile){const cached=readLocal('profile:'+currentUser.id,null);if(cached?.approval_status==='approved'){learnerProfile=cached;learning=cached.learning_language;translation=cached.translation_language;$('#learnerLearning').value=learning;$('#learnerTranslation').value=translation;$('#learnerPair').textContent=(languageNames[learning]||learning)+' ← '+(languageNames[translation]||translation)+' · מצב לא מקוון';setView('learner');await refreshLearnerStats();await loadAchievements();await loadLearning(learningType);toast('מצב לא מקוון: תכנים שמורים והתקדמות תסונכרן בחיבור הבא.');return}toast('לא ניתן לאמת את אישור החשבון ללא חיבור.');return}if(profile.approval_status!=='approved'){toast('החשבון ממתין לאישור מנהל.');setView('login');return}writeLocal('profile:'+currentUser.id,profile);await enterLearner()}
 async function callAdmin(payload){const {data:{session}}=await supabaseClient.auth.getSession();if(!session)throw new Error('יש להתחבר תחילה');const {data,error}=await supabaseClient.functions.invoke('admin',{body:payload});if(error)throw error;if(data?.error)throw new Error(data.error);return data}
 async function logEvent(event_type,metadata={}){if(!currentUser||!schemaReady)return;try{await supabaseClient.from('learning_events').insert({user_id:currentUser.id,event_type,metadata})}catch(e){console.warn('Event log failed',e)}}
 async function flushSessionDuration(){if(!currentUser||!schemaReady||document.visibilityState==='visible'&&Date.now()-lastDurationFlush<60000)return;const now=Date.now(),seconds=Math.floor((now-lastDurationFlush)/1000);if(seconds<15)return;lastDurationFlush=now;try{const {error}=await supabaseClient.from('learning_events').insert({user_id:currentUser.id,event_type:'study',duration_seconds:Math.min(seconds,3600),metadata:{kind:'active_session'}});if(error)console.warn('Session duration not saved',error)}catch(e){console.warn(e)}}
@@ -70,8 +76,7 @@ async function loadLearning(type='word'){
  if(!supabaseClient||!currentUser||!learnerProfile)return;
  learningType=type;$('#learningNotice').textContent='טוען תכנים...';$('#learningList').innerHTML='';
  const {data,error}=await supabaseClient.from('content_items').select('id,source_text,translation_text,transliteration,category,item_type').eq('status','published').eq('learning_language',learning).eq('translation_language',translation).eq('item_type',type).order('category').limit(500);
- if(error){$('#learningNotice').textContent='לא ניתן לטעון תכנים: '+error.message;return}
- learningItems=data||[];$('#availableCount').textContent=learningItems.length;
+ if(error){learningItems=readLocal('content:'+learning+':'+translation+':'+type,[]);if(learningItems.length)$('#learningNotice').textContent='מצב לא מקוון · מוצגים '+learningItems.length+' פריטים שמורים.';else{$('#learningNotice').textContent='אין תכנים שמורים במצב לא מקוון. התחבר לאינטרנט לטעינה ראשונה.';return}}else{learningItems=data||[];writeLocal('content:'+learning+':'+translation+':'+type,learningItems)}$('#availableCount').textContent=learningItems.length;
  if(!learningItems.length){$('#learningNotice').textContent='עדיין לא פורסמו '+(type==='word'?'מילים':'משפטים')+' בצמד השפות שבחרת. התוכן יופיע כאן לאחר פרסומו.';return}
  $('#learningNotice').textContent='נמצאו '+learningItems.length+' פריטים. לחץ על „תרגלתי” כדי לשמור התקדמות.';
  const {data:progress}=await supabaseClient.from('user_progress').select('content_item_id,mastery').eq('user_id',currentUser.id).in('content_item_id',learningItems.map(x=>x.id));
@@ -83,10 +88,14 @@ async function loadLearning(type='word'){
 function speakItem(id){const item=learningItems.find(x=>x.id===id);if(!item||!('speechSynthesis'in window)){toast('הקראת טקסט אינה זמינה במכשיר הזה');return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(item.source_text);u.lang=({th:'th-TH',he:'he-IL',en:'en-US'})[learning]||learning;speechSynthesis.speak(u)}
 async function markLearned(id,button){
  const old=button.textContent;button.disabled=true;
- try{const {data:existing}=await supabaseClient.from('user_progress').select('mastery,times_seen,times_correct').eq('user_id',currentUser.id).eq('content_item_id',id).maybeSingle();
- const row={user_id:currentUser.id,content_item_id:id,mastery:Math.min(5,(existing?.mastery||0)+1),times_seen:(existing?.times_seen||0)+1,times_correct:existing?.times_correct||0,last_seen_at:new Date().toISOString(),updated_at:new Date().toISOString()};
- const {error}=await supabaseClient.from('user_progress').upsert(row,{onConflict:'user_id,content_item_id'});if(error)throw error;
- await logEvent('study',{content_item_id:id});try{await callAdmin({action:'sync_achievements'});await loadAchievements()}catch(achievementError){console.warn('Achievement sync deferred',achievementError)}button.textContent='נשמר ✓';await refreshLearnerStats()
+ try{
+  const key='progress:'+currentUser.id,local=readLocal(key,{});let existing=local[id]||null;
+  if(navigator.onLine){const {data,error}=await supabaseClient.from('user_progress').select('mastery,times_seen,times_correct').eq('user_id',currentUser.id).eq('content_item_id',id).maybeSingle();if(error)throw error;existing=data||existing}
+  const row={user_id:currentUser.id,content_item_id:id,mastery:Math.min(5,(existing?.mastery||0)+1),times_seen:(existing?.times_seen||0)+1,times_correct:existing?.times_correct||0,last_seen_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+  local[id]=row;writeLocal(key,local);
+  if(!navigator.onLine){const q=readLocal(progressQueueKey(),[]).filter(x=>x.content_item_id!==id);q.push(row);writeLocal(progressQueueKey(),q);button.textContent='נשמר במכשיר ✓';toast('נשמר מקומית. הסנכרון יתבצע בחיבור הבא.');return}
+  const {error}=await supabaseClient.from('user_progress').upsert(row,{onConflict:'user_id,content_item_id'});if(error)throw error;
+  await logEvent('study',{content_item_id:id});try{await callAdmin({action:'sync_achievements'});await loadAchievements()}catch(achievementError){console.warn('Achievement sync deferred',achievementError)}button.textContent='נשמר ✓';await refreshLearnerStats()
  }catch(e){button.textContent=old;toast('שמירת ההתקדמות נכשלה: '+e.message)}finally{button.disabled=false}
 }
 function startQuiz(){
