@@ -52,8 +52,8 @@ V2 registration/login/admin UI and a first learner workspace are committed on th
 - Deploy the `admin` Edge Function and configure server-only secrets, including the exact `APP_ORIGIN`.
 - Verify the owner's Auth UUID, provision the immutable `owner_admin` app-metadata claim out-of-band, and approve that profile.
 - Perform end-to-end tests for signup/email verification, pending/approved/rejected/suspended access, RLS isolation, language changes, content draft/publish, progress, quiz scoring, and mobile PWA behavior.
-- Implement persistent rate limiting and complete offline content/progress queue + sync before describing offline learning as supported.
+- Validate the implemented offline app-shell/SDK cache, per-user content cache, local progress queue and reconnect sync on Android/iPhone; test conflict handling, quota behavior and expired sessions before describing offline learning as fully supported.
 - Build and review the requested multilingual content library; no large content set is auto-published by this branch.
-- Verify the current PWA shell on Android and iPhone after cache version `lingua-v2-shell-4`; this is shell caching only, not offline content/progress sync.
+- Verify the current PWA shell on Android and iPhone after cache version `lingua-v2-shell-4`; this now includes an SDK cache and a first local content/progress queue implementation, but requires real-device and sync-conflict validation.
 
 The production root app and `main` branch remain unchanged. Do not merge the draft PR until all release blockers are cleared.
