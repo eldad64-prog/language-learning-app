@@ -1,47 +1,35 @@
 (()=>{'use strict';
-const $=s=>document.querySelector(s);const $$=s=>[...document.querySelectorAll(s)];
-let learning='th',translation='he',toastTimer,supabaseClient=null,schemaReady=false;
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+let learning='th',translation='he',toastTimer,supabaseClient=null,schemaReady=false,currentUser=null,drafts=[];
 function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),5200)}
-function setView(name){$$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.view===name));['register','login','admin'].forEach(v=>$('#'+v+'View').classList.toggle('hidden',v!==name))}
+function setView(name){$$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.view===name));['register','login','admin'].forEach(v=>$('#'+v+'View').classList.toggle('hidden',v!==name));if(name==='admin')refreshAdmin()}
 $$('.tab').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 $('#showAdmin').addEventListener('click',()=>setView('admin'));
 function setupChoices(id,callback){const root=$('#'+id);root.addEventListener('click',e=>{const b=e.target.closest('[data-lang]');if(!b)return;root.querySelectorAll('.choice').forEach(x=>x.classList.toggle('selected',x===b));callback(b.dataset.lang)})}
 setupChoices('learningChoices',v=>learning=v);setupChoices('translationChoices',v=>translation=v);
 function setConnection(message,good=false){const el=$('#connectionState');if(el){el.textContent=message;el.className='connection '+(good?'good':'wait')}}
-async function init(){
- if(!window.supabase?.createClient||!window.LINGUA_SUPABASE_CONFIG){setConnection('ספריית החיבור לא נטענה');return}
+async function init(){if(!window.supabase?.createClient||!window.LINGUA_SUPABASE_CONFIG){setConnection('ספריית החיבור לא נטענה');return}
  const {url,publishableKey}=window.LINGUA_SUPABASE_CONFIG;
  supabaseClient=window.supabase.createClient(url,publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
- try{
-  const {error}=await supabaseClient.from('profiles').select('id').limit(1);
-  if(error){setConnection('החיבור קיים; ממתינים להתקנת מסד הנתונים');console.info('Lingua schema check:',error.message);return}
-  schemaReady=true;setConnection('החיבור למסד הנתונים פעיל',true);
-  const {data:{session}}=await supabaseClient.auth.getSession();
-  if(session){const {data:profile}=await supabaseClient.from('profiles').select('approval_status').eq('id',session.user.id).maybeSingle();if(profile?.approval_status==='approved')toast('אתה מחובר לחשבון שלך.');else toast('החשבון ממתין לאישור מנהל.');}
- }catch(err){setConnection('לא ניתן לאמת את מסד הנתונים');console.error(err)}
-}
-$('#registerForm').addEventListener('submit',async e=>{
- e.preventDefault();const p=$('#password').value,p2=$('#password2').value;
- if(p!==p2){toast('הסיסמאות אינן תואמות.');return}
- if(learning===translation){toast('בחר שפת לימוד ושפת תרגום שונות.');return}
- if(!supabaseClient||!schemaReady){toast('ההרשמה תיפתח לאחר התקנת מסד הנתונים ובדיקת ההרשאות.');return}
- const button=$('#registerForm button[type=submit]');button.disabled=true;
- try{
-  const {data,error}=await supabaseClient.auth.signUp({email:$('#email').value.trim(),password:p,options:{data:{display_name:$('#displayName').value.trim(),learning_language:learning,translation_language:translation}}});
-  if(error)throw error;
-  toast(data.session?'נוצר חשבון. הוא ממתין לאישור מנהל.':'נשלח אימייל לאימות. לאחר האימות החשבון ימתין לאישור מנהל.');
- }catch(err){toast('לא ניתן להשלים הרשמה: '+err.message)}finally{button.disabled=false}
-});
-$('#loginForm').addEventListener('submit',async e=>{
- e.preventDefault();if(!supabaseClient||!schemaReady){toast('הכניסה תופעל לאחר התקנת מסד הנתונים ובדיקת ההרשאות.');return}
- const fields=$$('#loginForm input');try{
-  const {data,error}=await supabaseClient.auth.signInWithPassword({email:fields[0].value.trim(),password:fields[1].value});
-  if(error)throw error;
-  const {data:profile,error:profileError}=await supabaseClient.from('profiles').select('approval_status').eq('id',data.user.id).maybeSingle();
-  if(profileError||!profile){await supabaseClient.auth.signOut();throw new Error('לא נמצא פרופיל משתמש. יש לפנות למנהל.')}
-  if(profile.approval_status!=='approved'){await supabaseClient.auth.signOut();toast('החשבון עדיין לא אושר על ידי מנהל המערכת.');return}
-  toast('התחברת בהצלחה. ממשק הלימוד יופעל בשלב הבא.');
- }catch(err){toast('הכניסה נכשלה: '+err.message)}
-});
+ try{const {error}=await supabaseClient.from('profiles').select('id').limit(1);if(error){setConnection('החיבור מוכן; ממתינים להתקנת מסד הנתונים');console.info('Schema not ready:',error.message);return}
+ schemaReady=true;setConnection('החיבור למסד הנתונים פעיל',true);
+ const {data:{session}}=await supabaseClient.auth.getSession();if(session){currentUser=session.user;const {data:profile}=await supabaseClient.from('profiles').select('approval_status').eq('id',session.user.id).maybeSingle();if(profile?.approval_status==='approved')toast('החשבון מחובר ומאושר.');else toast('החשבון ממתין לאישור מנהל.')}
+ }catch(err){setConnection('לא ניתן לאמת את מסד הנתונים');console.error(err)}}
+async function callAdmin(payload){const {data:{session}}=await supabaseClient.auth.getSession();if(!session)throw new Error('יש להתחבר תחילה');const {data,error}=await supabaseClient.functions.invoke('admin',{body:payload});if(error)throw error;if(data?.error)throw new Error(data.error);return data}
+async function refreshAdmin(){if(!supabaseClient||!schemaReady){$('#adminNotice').textContent='מסד הנתונים עדיין לא הותקן. פונקציות הניהול יפעלו לאחר התקנת המיגרציה ופריסת פונקציית השרת.';return}
+ try{const {data:{session}}=await supabaseClient.auth.getSession();if(!session){$('#adminNotice').textContent='התחבר עם חשבון המנהל כדי לפתוח את לוח הניהול.';return}
+ const stats=await callAdmin({action:'dashboard_stats'});$('#statUsers').textContent=stats.users;$('#statPending').textContent=stats.pending;$('#statActivity').textContent=stats.activity_events_7d;$('#statContent').textContent=stats.published_content;$('#adminNotice').textContent='אימות מנהל הצליח. לוח הניהול מחובר.';await loadUsers()
+ }catch(e){$('#adminNotice').textContent='אין הרשאת מנהל או שפונקציית הניהול טרם נפרסה: '+e.message}}
+async function loadUsers(){try{const r=await callAdmin({action:'list_users'});const rows=r.profiles||[];$('#usersTable').innerHTML=rows.length?'<table><thead><tr><th>שם</th><th>שפות</th><th>סטטוס</th><th>פעולות</th></tr></thead><tbody>'+rows.map(p=>'<tr><td>'+escapeHtml(p.display_name)+'</td><td>'+p.learning_language+' ← '+p.translation_language+'</td><td>'+p.approval_status+'</td><td>'+(p.approval_status==='pending'?'<button data-user="'+p.id+'" data-status="approved">אשר</button> <button data-user="'+p.id+'" data-status="rejected">דחה</button>':'<button data-user="'+p.id+'" data-status="suspended">השעיה</button>')+'</td></tr>').join('')+'</tbody></table>':'אין משתמשים להצגה';
+ $('#usersTable').querySelectorAll('[data-user]').forEach(b=>b.addEventListener('click',async()=>{try{await callAdmin({action:'set_approval',user_id:b.dataset.user,status:b.dataset.status});toast('סטטוס המשתמש עודכן');await refreshAdmin()}catch(e){toast(e.message)}}))
+ }catch(e){$('#usersTable').textContent='לא ניתן לטעון משתמשים: '+e.message}}
+async function loadDrafts(){try{const {data,error}=await supabaseClient.from('content_items').select('id,source_text,translation_text,item_type,learning_language,translation_language,status').eq('status','draft').order('created_at',{ascending:false}).limit(100);if(error)throw error;drafts=data||[];$('#draftsTable').innerHTML=drafts.length?'<table><thead><tr><th></th><th>תוכן</th><th>תרגום</th><th>שפות</th></tr></thead><tbody>'+drafts.map(d=>'<tr><td><input type="checkbox" data-draft="'+d.id+'"></td><td>'+escapeHtml(d.source_text)+'</td><td>'+escapeHtml(d.translation_text)+'</td><td>'+d.learning_language+' → '+d.translation_language+'</td></tr>').join('')+'</tbody></table>':'אין טיוטות כרגע'}catch(e){$('#draftsTable').textContent='לא ניתן לטעון טיוטות: '+e.message}}
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('#registerForm').addEventListener('submit',async e=>{e.preventDefault();const p=$('#password').value,p2=$('#password2').value;if(p!==p2){toast('הסיסמאות אינן תואמות.');return}if(learning===translation){toast('בחר שפת לימוד ושפת תרגום שונות.');return}if(!supabaseClient||!schemaReady){toast('מסד הנתונים טרם הותקן.');return}const btn=$('#registerForm button[type=submit]');btn.disabled=true;try{const {data,error}=await supabaseClient.auth.signUp({email:$('#email').value.trim(),password:p,options:{data:{display_name:$('#displayName').value.trim(),learning_language:learning,translation_language:translation}}});if(error)throw error;toast(data.session?'החשבון נוצר וממתין לאישור מנהל.':'נשלח אימייל אימות. לאחר האימות החשבון ימתין לאישור מנהל.')}catch(err){toast('הרשמה נכשלה: '+err.message)}finally{btn.disabled=false}});
+$('#loginForm').addEventListener('submit',async e=>{e.preventDefault();if(!supabaseClient||!schemaReady){toast('מסד הנתונים טרם הותקן.');return}const f=$$('#loginForm input');try{const {data,error}=await supabaseClient.auth.signInWithPassword({email:f[0].value.trim(),password:f[1].value});if(error)throw error;currentUser=data.user;const {data:profile,error:pe}=await supabaseClient.from('profiles').select('approval_status').eq('id',data.user.id).maybeSingle();if(pe||!profile){await supabaseClient.auth.signOut();throw new Error('לא נמצא פרופיל משתמש')}if(profile.approval_status!=='approved'){await supabaseClient.auth.signOut();toast('החשבון ממתין לאישור מנהל.');return}toast('התחברת בהצלחה.');setView(data.user.app_metadata?.role==='owner_admin'?'admin':'register')}catch(err){toast('הכניסה נכשלה: '+err.message)}});
+$('#loadAdmin').addEventListener('click',refreshAdmin);$('#loadUsers').addEventListener('click',loadUsers);
+$('#saveDraft').addEventListener('click',async()=>{if($('#contentLearning').value===$('#contentTranslation').value){toast('שפת הלימוד והתרגום חייבות להיות שונות');return}try{await callAdmin({action:'save_content',item:{learning_language:$('#contentLearning').value,translation_language:$('#contentTranslation').value,item_type:$('#contentType').value,category:$('#contentCategory').value,source_text:$('#contentSource').value,translation_text:$('#contentTranslationText').value,transliteration:$('#contentTransliteration').value}});toast('הטיוטה נשמרה');$('#contentSource').value='';$('#contentTranslationText').value='';$('#contentTransliteration').value='';await loadDrafts()}catch(e){toast('שמירת הטיוטה נכשלה: '+e.message)}});
+$('#publishSelected').addEventListener('click',async()=>{const ids=$$('#draftsTable [data-draft]:checked').map(x=>x.dataset.draft);if(!ids.length){toast('בחר לפחות פריט אחד לפרסום');return}try{const r=await callAdmin({action:'publish_content',ids});toast('פורסמו '+r.published+' פריטים');await loadDrafts();await refreshAdmin()}catch(e){toast('הפרסום נכשל: '+e.message)}});
+const originalRefresh=refreshAdmin;refreshAdmin=async()=>{await originalRefresh();if(schemaReady)await loadDrafts()};
 init();
 })();
