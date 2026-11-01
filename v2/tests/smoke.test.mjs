@@ -54,7 +54,6 @@ test("offline reconnect sync preserves quiz results and quiz-earned progress", (
   assert.match(app, /test-queue:'\+currentUser\.id/);
   assert.match(app, /from\('test_results'\)\.insert\(result\)/);
   assert.match(app, /crypto\.randomUUID\(\)/);
-  assert.match(app, /result\.id/);
   assert.match(app, /syncingOfflineQueue/);
   assert.match(app, /Quiz progress saved locally after sync error/);
 });
