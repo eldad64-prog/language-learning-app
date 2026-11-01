@@ -60,14 +60,18 @@ Deno.serve(async (req) => {
     if (profileError || profile?.approval_status !== "approved") {
       return json({ error: "Approved learner account required" }, 403, requestOrigin);
     }
-    const [progress, tests] = await Promise.all([
-      admin.from("user_progress").select("mastery").eq("user_id", user.id),
-      admin.from("test_results").select("score").eq("user_id", user.id),
+    const [progress, tests, best] = await Promise.all([
+      admin.from("user_progress").select("content_item_id", { count: "exact", head: true })
+        .eq("user_id", user.id).gte("mastery", 3),
+      admin.from("test_results").select("id", { count: "exact", head: true })
+        .eq("user_id", user.id),
+      admin.from("test_results").select("score").eq("user_id", user.id)
+        .order("score", { ascending: false }).limit(1).maybeSingle(),
     ]);
-    if (progress.error || tests.error) return json({ error: "Unable to evaluate achievements" }, 400, requestOrigin);
-    const learned = (progress.data ?? []).filter((x) => Number(x.mastery) >= 3).length;
-    const testCount = (tests.data ?? []).length;
-    const bestScore = (tests.data ?? []).reduce((best, x) => Math.max(best, Number(x.score)), 0);
+    if (progress.error || tests.error || best.error) return json({ error: "Unable to evaluate achievements" }, 400, requestOrigin);
+    const learned = progress.count ?? 0;
+    const testCount = tests.count ?? 0;
+    const bestScore = Number(best.data?.score ?? 0);
     const candidates = [
       { key: "first_item", title: "הצעד הראשון", description: "למדת את הפריט הראשון שלך", earned: learned >= 1 },
       { key: "learner_10", title: "מתחילים להתקדם", description: "למדת 10 פריטים", earned: learned >= 10 },
