@@ -19,7 +19,7 @@ async function init(){
   schemaReady=true;setConnection('החיבור למסד הנתונים פעיל',true);
   const {data:{session}}=await supabaseClient.auth.getSession();
   if(session){currentUser=session.user;if(isOwner())setView('admin');else await routeLearner()}
-  supabaseClient.auth.onAuthStateChange(async(event,session)=>{if(event==='SIGNED_OUT'){currentUser=null;learnerProfile=null;setView('login')}else if(event==='SIGNED_IN'&&session){currentUser=session.user;if(isOwner())setView('admin');else await routeLearner()}});
+  supabaseClient.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT'){currentUser=null;learnerProfile=null;setView('login')}});
  }catch(err){setConnection('לא ניתן לאמת את מסד הנתונים');console.error(err)}
 }
 function isOwner(){return currentUser?.app_metadata?.role==='owner_admin'}
