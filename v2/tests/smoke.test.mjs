@@ -57,3 +57,14 @@ test("offline reconnect sync preserves quiz results and quiz-earned progress", (
   assert.match(app, /syncingOfflineQueue/);
   assert.match(app, /Quiz progress saved locally after sync error/);
 });
+
+test("offline quiz fallback does not double-increment locally saved progress", () => {
+  assert.match(app, /const row=local\[item\.id\]\|\|\{user_id:currentUser\.id,content_item_id:item\.id,mastery:1,times_seen:1,times_correct:1/);
+  assert.doesNotMatch(app, /Quiz progress saved locally after sync error'[\s\S]{0,500}mastery:Math\.min\(5,\(local\[item\.id\]\?\.mastery\|\|0\)\+1\)/);
+});
+
+test("learner statistics merge remote data with local pending progress and test queues", () => {
+  assert.match(app, /const localProgress=Object\.values\(readLocal\('progress:'/);
+  assert.match(app, /const pendingTests=readLocal\('test-queue:'/);
+  assert.match(app, /new Map\(\[\.\.\.testRows,\.\.\.localTests,\.\.\.pendingTests\]/);
+});
