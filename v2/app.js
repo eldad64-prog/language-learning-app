@@ -74,8 +74,14 @@ async function refreshLearnerStats(){
   if(!progress.error)writeLocal('progress:'+currentUser.id,Object.fromEntries(progressRows.map(x=>[x.content_item_id,x])));
   if(!tests.error)writeLocal('tests:'+currentUser.id,testRows);
  }
- if(!progressRows.length)progressRows=Object.values(readLocal('progress:'+currentUser.id,{}));
- if(!testRows.length)testRows=readLocal('tests:'+currentUser.id,[]);
+ const localProgress=Object.values(readLocal('progress:'+currentUser.id,{}));
+ const progressById=new Map(progressRows.map(x=>[x.content_item_id,x]));
+ for(const row of localProgress){const remote=progressById.get(row.content_item_id);if(!remote||new Date(row.updated_at||0)>new Date(remote.updated_at||0))progressById.set(row.content_item_id,row)}
+ progressRows=[...progressById.values()];
+ const localTests=readLocal('tests:'+currentUser.id,[]);
+ const pendingTests=readLocal('test-queue:'+currentUser.id,[]);
+ const testsById=new Map([...testRows,...localTests,...pendingTests].map(x=>[x.id||[x.completed_at,x.score,x.question_count].join(':'),x]));
+ testRows=[...testsById.values()].sort((a,b)=>new Date(b.completed_at)-new Date(a.completed_at));
  const mastered=progressRows.filter(x=>x.mastery>=3).length;
  $('#learnedCount').textContent=mastered;$('#testCount').textContent=testRows.length;$('#lastScore').textContent=testRows.length?Math.round(Number(testRows[0].score))+'%':'—';
 }
@@ -122,7 +128,7 @@ async function answerQuestion(button,item){
  if(quizAnswered)return;quizAnswered=true;const correct=button.dataset.answer===item.id;if(correct)quizCorrect++;
  $('#quizAnswers').querySelectorAll('button').forEach(b=>{b.disabled=true;if(b.dataset.answer===item.id)b.classList.add('correct');else if(b===button)b.classList.add('incorrect')});
  $('#quizFeedback').textContent=correct?'נכון מאוד!':'לא מדויק. התשובה הנכונה: '+item.translation_text;
- if(correct){try{const key='progress:'+currentUser.id,local=readLocal(key,{});let existing=local[item.id]||null;if(navigator.onLine){const {data,error}=await supabaseClient.from('user_progress').select('mastery,times_seen,times_correct').eq('user_id',currentUser.id).eq('content_item_id',item.id).maybeSingle();if(error)throw error;existing=data||existing}const row={user_id:currentUser.id,content_item_id:item.id,mastery:Math.min(5,(existing?.mastery||0)+1),times_seen:(existing?.times_seen||0)+1,times_correct:(existing?.times_correct||0)+1,last_seen_at:new Date().toISOString(),updated_at:new Date().toISOString()};local[item.id]=row;writeLocal(key,local);if(!navigator.onLine){const q=readLocal(progressQueueKey(),[]).filter(x=>x.content_item_id!==item.id);q.push(row);writeLocal(progressQueueKey(),q)}else{const {error}=await supabaseClient.from('user_progress').upsert(row,{onConflict:'user_id,content_item_id'});if(error)throw error}}catch(e){console.warn('Quiz progress saved locally after sync error',e);const key='progress:'+currentUser.id,local=readLocal(key,{}),row={user_id:currentUser.id,content_item_id:item.id,mastery:Math.min(5,(local[item.id]?.mastery||0)+1),times_seen:(local[item.id]?.times_seen||0)+1,times_correct:(local[item.id]?.times_correct||0)+1,last_seen_at:new Date().toISOString(),updated_at:new Date().toISOString()};local[item.id]=row;writeLocal(key,local);const q=readLocal(progressQueueKey(),[]).filter(x=>x.content_item_id!==item.id);q.push(row);writeLocal(progressQueueKey(),q)}}
+ if(correct){try{const key='progress:'+currentUser.id,local=readLocal(key,{});let existing=local[item.id]||null;if(navigator.onLine){const {data,error}=await supabaseClient.from('user_progress').select('mastery,times_seen,times_correct').eq('user_id',currentUser.id).eq('content_item_id',item.id).maybeSingle();if(error)throw error;existing=data||existing}const row={user_id:currentUser.id,content_item_id:item.id,mastery:Math.min(5,(existing?.mastery||0)+1),times_seen:(existing?.times_seen||0)+1,times_correct:(existing?.times_correct||0)+1,last_seen_at:new Date().toISOString(),updated_at:new Date().toISOString()};local[item.id]=row;writeLocal(key,local);if(!navigator.onLine){const q=readLocal(progressQueueKey(),[]).filter(x=>x.content_item_id!==item.id);q.push(row);writeLocal(progressQueueKey(),q)}else{const {error}=await supabaseClient.from('user_progress').upsert(row,{onConflict:'user_id,content_item_id'});if(error)throw error}}catch(e){console.warn('Quiz progress saved locally after sync error',e);const key='progress:'+currentUser.id,local=readLocal(key,{});const row=local[item.id]||{user_id:currentUser.id,content_item_id:item.id,mastery:1,times_seen:1,times_correct:1,last_seen_at:new Date().toISOString(),updated_at:new Date().toISOString()};local[item.id]=row;writeLocal(key,local);const q=readLocal(progressQueueKey(),[]).filter(x=>x.content_item_id!==item.id);q.push(row);writeLocal(progressQueueKey(),q)}}
  $('#nextQuestion').textContent=quizIndex===quizItems.length-1?'סיום המבחן':'השאלה הבאה';$('#nextQuestion').classList.remove('hidden')
 }
 async function nextQuiz(){
