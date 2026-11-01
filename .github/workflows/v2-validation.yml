@@ -50,3 +50,4 @@ jobs:
           test -s v2/supabase-schema.sql
           test -s v2/supabase/functions/admin/index.ts
           test -s v2/supabase-achievements-migration.sql
+          test -s v2/supabase-rate-limits-migration.sql
