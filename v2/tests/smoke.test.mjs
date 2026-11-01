@@ -29,6 +29,8 @@ test("database schema protects private data and has server-only rate limiting", 
     assert.match(schema, new RegExp("alter table public\\." + table + " enable row level security"));
   }
   assert.match(schema, /user_id = \(select auth\.uid\(\)\)/);
+  assert.match(schema, /create table if not exists public\.test_results \([\s\S]*?id uuid primary key default gen_random_uuid\(\)/);
+  assert.match(schema, /unique\(user_id, achievement_key\)/);
   assert.match(schema, /grant execute on function public\.consume_api_rate_limit\(uuid,text,integer,integer\) to service_role/);
 });
 
