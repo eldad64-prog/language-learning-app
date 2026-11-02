@@ -4,6 +4,6 @@
   Never put a service_role/secret key in this file.
 */
 window.LANGUAGE_APP_SUPABASE = {
-  url: "PASTE_SUPABASE_PROJECT_URL_HERE",
+  url: "https://ybwxcpblvsrjbazdueya.supabase.co",
   anonKey: "sb_publishable_gAEmxJmMZPI8Yv_BaXfUpg_MfPxWo4B"
 };
